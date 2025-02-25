@@ -1,5 +1,9 @@
 #include "./Vigenere.cpp"
+#include <array>
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
+#include <limits>
 #include <string>
 
 extern "C" {
@@ -8,6 +12,10 @@ extern "C" {
 }
 
 using namespace std;
+
+void handholdMode();
+bool getYesNo(string display, const array<char, 2> chars = {'y', 'n'});
+string getTextFromFile();
 
 const char *SHORT_OPTS = "ed:f:m:l:r:t:hHv";
 const struct option LONG_OPTS[] = {{"encode", no_argument, nullptr, 'e'},
@@ -26,8 +34,8 @@ const struct option LONG_OPTS[] = {{"encode", no_argument, nullptr, 'e'},
 int main(int argc, char *argv[]) {
   char c;
   string out = "";
-  string ciphertext = nullptr;
-  string plaintext = nullptr;
+  string ciphertext;
+  string plaintext;
 
   while ((c = getopt_long(argc, argv, SHORT_OPTS, LONG_OPTS, nullptr)) != -1) {
     switch (c) {
@@ -63,7 +71,8 @@ int main(int argc, char *argv[]) {
 
       break;
     case 'H':
-      // insert code here
+      handholdMode();
+      exit(EXIT_SUCCESS);
 
       break;
     case 'v':
@@ -79,7 +88,112 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  cout << out << "\n";
+  cout << out << "\n" << endl;
 
   return 0;
+}
+
+void handholdMode() {
+  string text, key, output;
+  bool hasKey, textInFile, keyInFile, encode;
+
+  hasKey = getYesNo("Do you know the key to encode/decode your text? (y/n): ");
+
+  // simple encode/decode path
+  if (hasKey) {
+
+    textInFile = getYesNo("Is your text in a file? (y/n): ");
+
+    if (textInFile) {
+      text = getTextFromFile();
+    } else {
+      cout << "Enter your text to encode/decode: ";
+      getline(cin, text);
+    }
+
+    keyInFile = getYesNo("Is your key in a file (y/n): ");
+
+    if (keyInFile) {
+      key = getTextFromFile();
+    } else {
+      cout << "Enter your key: ";
+      getline(cin, key);
+
+      string tmp;
+      for (char c : key) {
+        if (isalpha(c)) {
+          tmp += c;
+        }
+      }
+      key = tmp;
+    }
+
+    encode = getYesNo("Do you wish to encode or decode? (e/d): ", {'e', 'd'});
+
+    if (encode) {
+      Vigenere vig(text);
+      output = vig.encode(key);
+    } else {
+      Vigenere vig(text);
+      output = vig.decode(key);
+    }
+    cout << "OUTPUT: " << endl;
+    cout << output << endl;
+  }
+}
+
+bool getYesNo(string display, const array<char, 2> chars) {
+  char c;
+
+  cout << display;
+  cin >> c;
+  c = tolower(c);
+
+  // clear kb buffer
+  cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+  while (c != chars[0] && c != chars[1]) {
+    cout << "Invalid input. Enter '" << chars[0] << "' or '" << chars[1] << "'."
+         << endl;
+    cout << display;
+    cin >> c;
+    c = tolower(c);
+
+    // clear kb buffer
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+  }
+
+  return c == chars[0];
+}
+
+string getTextFromFile() {
+  ifstream file;
+  string filename, text;
+
+  cout << "Enter the name of the file: ";
+  getline(cin, filename);
+
+  file.open(filename);
+
+  while (!file.is_open() && filename != "q") {
+    cout << filename
+         << " could not be opened. Enter a different file name or 'q' to "
+            "quit."
+         << endl;
+    cout << "Enter the name of the file: ";
+    getline(cin, filename);
+    file.open(filename);
+  }
+
+  if (filename == "q") {
+    exit(EXIT_SUCCESS);
+  }
+
+  string line;
+  while (getline(file, line)) {
+    text += line + "\n";
+  }
+  file.close();
+
+  return text;
 }

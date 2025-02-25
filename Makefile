@@ -38,7 +38,7 @@ DEPS_DIR := .dependencies
 DOCS_DIR := docs
 
 # Additional compiler/linker flags
-CFLAGS := # PRESET - SPECIFY YOUR C/C++ COMPILER FLAGS
+CFLAGS := -g# PRESET - SPECIFY YOUR C/C++ COMPILER FLAGS
 LDFLAGS := # PRESET - SPECIFY YOUR C/C++ LINKER FLAGS
 
 # Documentation

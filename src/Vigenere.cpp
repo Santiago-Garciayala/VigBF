@@ -2,6 +2,8 @@
 #include <cctype>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 using namespace std;
 
@@ -9,23 +11,44 @@ class Vigenere {
 private:
   string text;
   string text_only_alpha;
+  unordered_map<int, char> non_alpha_removed;
+  vector<int> non_alpha_removed_keys;
 
-  static string removeNonAlpha(string in) {
-    string out;
-    out.reserve(in.length());
+  void removeNonAlpha() {
+    this->text_only_alpha.reserve(this->text.length());
 
-    for (char c : in) {
-      if (isalpha(c))
-        out += c;
+    for (int i = 0; i < this->text.length(); ++i) {
+      if (isalpha(this->text[i]))
+        this->text_only_alpha += this->text[i];
+      else {
+        non_alpha_removed[i] = this->text[i];
+        non_alpha_removed_keys.push_back(i);
+      }
+    }
+  }
+
+  string addNonAlpha(string in) {
+    string outstr = in;
+    outstr.resize(in.length() + non_alpha_removed.size());
+
+    int offset = non_alpha_removed_keys.size();
+    for (int i = outstr.length(); offset > 0; --i) {
+      if (non_alpha_removed_keys[offset - 1] == i) {
+        outstr[i] = non_alpha_removed[i];
+        --offset;
+        continue;
+      }
+
+      outstr[i] = outstr[i - offset];
     }
 
-    return out;
+    return outstr;
   }
 
 public:
   Vigenere(string text) {
     this->text = text;
-    text_only_alpha = removeNonAlpha(text);
+    removeNonAlpha();
   }
 
   /**
@@ -80,4 +103,36 @@ public:
 
     return ciphertext;
   }
+
+  string decode(string key) {
+    string decoded = staticDecode(this->text_only_alpha, key);
+    decoded = addNonAlpha(decoded);
+    return decoded;
+  }
+
+  string encode(string key) {
+    string encoded = staticDecode(this->text_only_alpha, key);
+    encoded = addNonAlpha(encoded);
+    return encoded;
+  }
+
+  string decodeRaw(string key) {
+    return staticDecode(this->text_only_alpha, key);
+  }
+
+  string encodeRaw(string key) {
+    return staticEncode(this->text_only_alpha, key);
+  }
+
+  string getText() { return this->text; }
+
+  void setText(string text) {
+    non_alpha_removed.clear();
+    non_alpha_removed_keys.clear();
+
+    this->text = text;
+    removeNonAlpha();
+  }
+
+  string getTextOnlyAlpha() { return this->text_only_alpha; }
 };
