@@ -14,6 +14,8 @@ extern "C" {
 using namespace std;
 
 void handholdMode();
+void known_key_handhold();
+void unknown_key_handhold();
 bool getYesNo(string display, const array<char, 2> chars = {'y', 'n'});
 string getTextFromFile();
 
@@ -94,53 +96,62 @@ int main(int argc, char *argv[]) {
 }
 
 void handholdMode() {
-  string text, key, output;
-  bool hasKey, textInFile, keyInFile, encode;
+  bool hasKey;
 
   hasKey = getYesNo("Do you know the key to encode/decode your text? (y/n): ");
 
   // simple encode/decode path
   if (hasKey) {
-
-    textInFile = getYesNo("Is your text in a file? (y/n): ");
-
-    if (textInFile) {
-      text = getTextFromFile();
-    } else {
-      cout << "Enter your text to encode/decode: ";
-      getline(cin, text);
-    }
-
-    keyInFile = getYesNo("Is your key in a file (y/n): ");
-
-    if (keyInFile) {
-      key = getTextFromFile();
-    } else {
-      cout << "Enter your key: ";
-      getline(cin, key);
-
-      string tmp;
-      for (char c : key) {
-        if (isalpha(c)) {
-          tmp += c;
-        }
-      }
-      key = tmp;
-    }
-
-    encode = getYesNo("Do you wish to encode or decode? (e/d): ", {'e', 'd'});
-
-    if (encode) {
-      Vigenere vig(text);
-      output = vig.encode(key);
-    } else {
-      Vigenere vig(text);
-      output = vig.decode(key);
-    }
-    cout << "OUTPUT: " << endl;
-    cout << output << endl;
+    known_key_handhold();
+  } else { // unknown key path
+    unknown_key_handhold();
   }
 }
+
+void known_key_handhold() {
+  string text, key, output;
+  bool textInFile, keyInFile, encode;
+
+  textInFile = getYesNo("Is your text in a file? (y/n): ");
+
+  if (textInFile) {
+    text = getTextFromFile();
+  } else {
+    cout << "Enter your text to encode/decode: ";
+    getline(cin, text);
+  }
+
+  keyInFile = getYesNo("Is your key in a file (y/n): ");
+
+  if (keyInFile) {
+    key = getTextFromFile();
+  } else {
+    cout << "Enter your key: ";
+    getline(cin, key);
+
+    string tmp;
+    for (char c : key) {
+      if (isalpha(c)) {
+        tmp += c;
+      }
+    }
+    key = tmp;
+  }
+
+  encode = getYesNo("Do you wish to encode or decode? (e/d): ", {'e', 'd'});
+
+  if (encode) {
+    Vigenere vig(text);
+    output = vig.encode(key);
+  } else {
+    Vigenere vig(text);
+    output = vig.decode(key);
+  }
+  cout << "OUTPUT: " << endl;
+  cout << output << endl;
+}
+
+void unknown_key_handhold() {}
 
 bool getYesNo(string display, const array<char, 2> chars) {
   char c;
