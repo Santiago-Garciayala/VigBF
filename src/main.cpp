@@ -151,7 +151,27 @@ void known_key_handhold() {
   cout << output << endl;
 }
 
-void unknown_key_handhold() {}
+void unknown_key_handhold() {
+  string text;
+  bool textInFile;
+
+  textInFile = getYesNo("Is the text you want to decode in a file?");
+
+  if (textInFile) {
+    text = getTextFromFile();
+  } else {
+    cout << "Enter the text you want to decode: ";
+    getline(cin, text);
+
+    string tmp;
+    for (char c : text) {
+      if (isalpha(c)) {
+        tmp += c;
+      }
+    }
+    text = tmp;
+  }
+}
 
 bool getYesNo(string display, const array<char, 2> chars) {
   char c;
