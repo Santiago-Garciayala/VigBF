@@ -1,4 +1,5 @@
-#include "./Vigenere.cpp"
+#include "./Vigenere.h"
+#include "Attacker.h"
 #include <array>
 #include <cstdlib>
 #include <fstream>
@@ -19,7 +20,7 @@ void unknown_key_handhold();
 bool getYesNo(string display, const array<char, 2> chars = {'y', 'n'});
 string getTextFromFile();
 
-const char *SHORT_OPTS = "ed:f:m:l:r:t:hHv";
+const char *SHORT_OPTS = "ed:f:m:l:r:t:ThHv";
 const struct option LONG_OPTS[] = {{"encode", no_argument, nullptr, 'e'},
                                    {"decode", no_argument, nullptr, 'd'},
                                    {"input", required_argument, nullptr, 'i'},
@@ -68,6 +69,12 @@ int main(int argc, char *argv[]) {
       // insert code here
 
       break;
+    case 'T': {
+      // TEST MODE
+      attacks::Attacker attacker;
+
+      break;
+    }
     case 'h':
       // insert code here
 
