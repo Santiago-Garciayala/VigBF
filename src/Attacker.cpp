@@ -1,5 +1,6 @@
 #include "Attacker.h"
 #include <array>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -25,14 +26,15 @@ Attacker::Attacker() {
 void Attacker::load_probabilities() {
   std::ifstream file(PROBABILITIES_FILE, std::ios::binary);
 
-  // probabilities.fill(0.0);
   // TODO: FIX THIS, IT DOESNT WORK
-  file.read(reinterpret_cast<char *>(probabilities.data()), sizeof(double));
-  /*
+  file.read(reinterpret_cast<char *>(probabilities.data()),
+            PROBABILITIES_SIZE * sizeof(double));
+
   if (!file) {
-    throw std::runtime_error("Error reading probability data from file");
+    std::cerr << "Error reading probabilities file: " << strerror(errno)
+              << std::endl;
+    std::cerr << "Bytes read: " << file.gcount() << std::endl;
   }
-  */
   is_probabilities_loaded = true;
 }
 
