@@ -71,7 +71,15 @@ int main(int argc, char *argv[]) {
       break;
     case 'T': {
       // TEST MODE
-      attacks::Attacker attacker;
+      std::string tesxt;
+      cout << "text: ";
+      getline(cin, tesxt);
+      for (auto &c : tesxt) {
+        c = toupper(c); // uppercase entire string
+      }
+      Vigenere v(tesxt);
+      attacks::Attacker a;
+      cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;
 
       break;
     }
