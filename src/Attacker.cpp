@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace attacks {
 
@@ -56,10 +57,9 @@ double Attacker::fitness(const std::string &text) {
     // this gives weird memory error for some reason
     // std::string tetragram = text.substr(i, 4);
 
-    int x = ((int)alphabet.find(text[i]) * 26 * 26 * 26 +
-             (int)alphabet.find(text[i + 1]) * 26 * 26 +
-             (int)alphabet.find(text[i + 2]) * 26 +
-             (int)alphabet.find(text[i + 3]));
+    int x = (alphabet.find(text[i]) * 26 * 26 * 26 +
+             alphabet.find(text[i + 1]) * 26 * 26 +
+             alphabet.find(text[i + 2]) * 26 + alphabet.find(text[i + 3]));
     double y = probabilities[x];
 
     if (y == 0) {
@@ -70,5 +70,45 @@ double Attacker::fitness(const std::string &text) {
   }
   result = result / (text.size() - 3);
   return result;
+}
+
+double Attacker::index_of_coincidence(const std::string &text) {
+  std::array<int, 26> counts = {};
+  int numer = 0, total = 0;
+  std::string alphabet;
+  alphabet.assign(isupper(text[0]) ? ALPHABET_U : ALPHABET_L);
+
+  for (auto c : text) {
+    counts[alphabet.find(c)] += 1;
+  }
+
+  for (int i = 0; i < 26; ++i) {
+    numer += counts[i] * (counts[i] - 1);
+    total += counts[i];
+  }
+
+  return 26.0 * numer / (total * (total - 1));
+}
+
+int Attacker::get_period(const std::string &text) {
+  bool found = false;
+  int period = 0;
+
+  while (!found) {
+    period += 1;
+    std::vector<std::string> slices(period, "");
+    for (int i = 0; i < text.size(); ++i) {
+      slices[i % period] += text[i];
+    }
+    double sum = 0;
+    for (int j = 0; j < period; ++j) {
+      sum += index_of_coincidence(slices[j]);
+    }
+    double ioc = sum / period;
+    if (ioc > 1.6)
+      found = true;
+  }
+
+  return period;
 }
 } // namespace attacks

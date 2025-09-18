@@ -19,6 +19,8 @@ private:
 public:
   Attacker();
   double fitness(const std::string &text);
+  double index_of_coincidence(const std::string &text);
+  int get_period(const std::string &text);
 };
 } // namespace attacks
 

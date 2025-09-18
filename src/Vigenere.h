@@ -25,6 +25,8 @@ public:
   static string staticEncode(string plaintext, string key);
   string decode(string key);
   string encode(string key);
+  string decodeNoAlpha(string key);
+  string encodeNoAlpha(string key);
   string decodeRaw(string key);
   string encodeRaw(string key);
   string getText();

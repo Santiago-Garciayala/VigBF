@@ -1,10 +1,9 @@
 #include "./Vigenere.h"
 #include "Attacker.h"
+#include "misc.h"
 #include <array>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <limits>
 #include <string>
 
 extern "C" {
@@ -17,8 +16,6 @@ using namespace std;
 void handholdMode();
 void known_key_handhold();
 void unknown_key_handhold();
-bool getYesNo(string display, const array<char, 2> chars = {'y', 'n'});
-string getTextFromFile();
 
 const char *SHORT_OPTS = "ed:f:m:l:r:t:ThHv";
 const struct option LONG_OPTS[] = {{"encode", no_argument, nullptr, 'e'},
@@ -71,14 +68,13 @@ int main(int argc, char *argv[]) {
       break;
     case 'T': {
       // TEST MODE
-      std::string tesxt;
-      cout << "text: ";
-      getline(cin, tesxt);
-      for (auto &c : tesxt) {
-        c = toupper(c); // uppercase entire string
-      }
-      Vigenere v(tesxt);
+      std::string tesxt = misc::getTextFromFile();
+      Vigenere v(misc::stringToUpper(tesxt));
       attacks::Attacker a;
+      std::string encoded_text = v.encodeNoAlpha("MEGALON");
+      cout << "encoded text: " << encoded_text << std::endl;
+      int period = a.get_period(encoded_text);
+      cout << "period: " << period << std::endl;
       cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;
 
       break;
@@ -113,7 +109,8 @@ int main(int argc, char *argv[]) {
 void handholdMode() {
   bool hasKey;
 
-  hasKey = getYesNo("Do you know the key to encode/decode your text? (y/n): ");
+  hasKey =
+      misc::getYesNo("Do you know the key to encode/decode your text? (y/n): ");
 
   // simple encode/decode path
   if (hasKey) {
@@ -127,19 +124,19 @@ void known_key_handhold() {
   string text, key, output;
   bool textInFile, keyInFile, encode;
 
-  textInFile = getYesNo("Is your text in a file? (y/n): ");
+  textInFile = misc::getYesNo("Is your text in a file? (y/n): ");
 
   if (textInFile) {
-    text = getTextFromFile();
+    text = misc::getTextFromFile();
   } else {
     cout << "Enter your text to encode/decode: ";
     getline(cin, text);
   }
 
-  keyInFile = getYesNo("Is your key in a file (y/n): ");
+  keyInFile = misc::getYesNo("Is your key in a file (y/n): ");
 
   if (keyInFile) {
-    key = getTextFromFile();
+    key = misc::getTextFromFile();
   } else {
     cout << "Enter your key: ";
     getline(cin, key);
@@ -153,7 +150,8 @@ void known_key_handhold() {
     key = tmp;
   }
 
-  encode = getYesNo("Do you wish to encode or decode? (e/d): ", {'e', 'd'});
+  encode =
+      misc::getYesNo("Do you wish to encode or decode? (e/d): ", {'e', 'd'});
 
   if (encode) {
     Vigenere vig(text);
@@ -170,10 +168,10 @@ void unknown_key_handhold() {
   string text;
   bool textInFile;
 
-  textInFile = getYesNo("Is the text you want to decode in a file?");
+  textInFile = misc::getYesNo("Is the text you want to decode in a file?");
 
   if (textInFile) {
-    text = getTextFromFile();
+    text = misc::getTextFromFile();
   } else {
     cout << "Enter the text you want to decode: ";
     getline(cin, text);
@@ -186,60 +184,4 @@ void unknown_key_handhold() {
     }
     text = tmp;
   }
-}
-
-bool getYesNo(string display, const array<char, 2> chars) {
-  char c;
-
-  cout << display;
-  cin >> c;
-  c = tolower(c);
-
-  // clear kb buffer
-  cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-  while (c != chars[0] && c != chars[1]) {
-    cout << "Invalid input. Enter '" << chars[0] << "' or '" << chars[1] << "'."
-         << endl;
-    cout << display;
-    cin >> c;
-    c = tolower(c);
-
-    // clear kb buffer
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-  }
-
-  return c == chars[0];
-}
-
-string getTextFromFile() {
-  ifstream file;
-  string filename, text;
-
-  cout << "Enter the name of the file: ";
-  getline(cin, filename);
-
-  file.open(filename);
-
-  while (!file.is_open() && filename != "q") {
-    cout << filename
-         << " could not be opened. Enter a different file name or 'q' to "
-            "quit."
-         << endl;
-    cout << "Enter the name of the file: ";
-    getline(cin, filename);
-    file.open(filename);
-  }
-
-  if (filename == "q") {
-    exit(EXIT_SUCCESS);
-  }
-
-  string line;
-  while (getline(file, line)) {
-    text += line + "\n";
-  }
-  file.close();
-
-  return text;
 }
