@@ -8,7 +8,7 @@ namespace misc {
 
 bool getYesNo(std::string display,
               const std::array<char, 2> chars = {'y', 'n'});
-std::string getTextFromFile();
+std::string getTextFromFile(std::string filename = "");
 std::string stringToUpper(const std::string in);
 } // namespace misc
 

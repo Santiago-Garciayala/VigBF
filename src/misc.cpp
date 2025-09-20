@@ -33,13 +33,15 @@ bool getYesNo(std::string display, const std::array<char, 2> chars) {
 
   return c == chars[0];
 }
-std::string getTextFromFile() {
+std::string getTextFromFile(std::string filename) {
 
   std::ifstream file;
-  std::string filename, text;
+  std::string text;
 
-  std::cout << "Enter the name of the file: ";
-  getline(std::cin, filename);
+  if (filename == "") {
+    std::cout << "Enter the name of the file: ";
+    getline(std::cin, filename);
+  }
 
   file.open(filename);
 

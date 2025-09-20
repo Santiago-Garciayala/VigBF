@@ -68,14 +68,18 @@ int main(int argc, char *argv[]) {
       break;
     case 'T': {
       // TEST MODE
-      std::string tesxt = misc::getTextFromFile();
+      std::string tesxt = misc::getTextFromFile("resources/books/pg22400.txt");
       Vigenere v(misc::stringToUpper(tesxt));
       attacks::Attacker a;
-      std::string encoded_text = v.encodeNoAlpha("MEGALON");
+      std::string encoded_text = v.encodeNoAlpha("ACB");
       cout << "encoded text: " << encoded_text << std::endl;
       int period = a.get_period(encoded_text);
       cout << "period: " << period << std::endl;
       cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;
+
+      Vigenere v2(encoded_text);
+      std::string attack_result = a.brute_force_single_thread(v2, 2, 3).second;
+      cout << attack_result << std::endl;
 
       break;
     }

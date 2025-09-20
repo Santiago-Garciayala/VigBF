@@ -109,7 +109,6 @@ string Vigenere::encode(string key) {
 
 string Vigenere::decodeNoAlpha(string key) {
   string decoded = staticDecode(this->text_only_alpha, key);
-  decoded = addNonAlpha(decoded);
   return decoded;
 }
 
