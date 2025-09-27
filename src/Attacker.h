@@ -18,7 +18,7 @@ const static short ALPHABET_LEN = 26;
 const static int PROBABILITIES_SIZE =
     ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN;
 const static short FITNESS_UNFIT = -15;
-const static short FITNESS_THRESHOLD = -10;
+const static double FITNESS_THRESHOLD = -9.8;
 const static std::pair<std::string, std::string> NOT_FOUND = {"", "NOT FOUND"};
 extern std::array<double, PROBABILITIES_SIZE> probabilities;
 extern std::vector<std::string> dict_words;
@@ -41,6 +41,8 @@ public:
   std::pair<std::string, std::string> dictionary_attack(Vigenere &v);
   std::pair<std::string, std::string> crib_attack(Vigenere &v,
                                                   const std::string &crib);
+  std::pair<std::string, std::string> variational_attack(Vigenere &v,
+                                                         int period);
 };
 } // namespace attacks
 

@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <experimental/random>
 #include <fstream>
 #include <iostream>
 #include <stdint.h>
@@ -287,15 +288,49 @@ Attacker::crib_attack(Vigenere &v, const std::string &crib) {
   decrypted_txt = v.decodeNoAlpha(decrypted_chunk);
   fitns = Attacker::fitness(decrypted_txt);
 
-  cout << "fitness: " << fitns << std::endl;
+  // cout << "fitness: " << fitns << std::endl;
 
   if (fitns > FITNESS_THRESHOLD) {
     solution.first = decrypted_chunk;
-    solution.second = decrypted_txt;
+    solution.second = v.decode(decrypted_chunk);
     return solution;
   }
 
   return NOT_FOUND;
+}
+
+std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
+                                                                 int period) {
+  std::pair<std::string, std::string> solution = NOT_FOUND;
+  const std::string &alphabet =
+      isupper(v.getTextOnlyAlpha()[0]) ? ALPHABET_U : ALPHABET_L;
+  std::string key;
+  std::string new_key;
+  std::string attempt;
+  double fitns = FITNESS_UNFIT;
+
+  key.resize(period, alphabet[0]);
+  attempt.reserve(v.getTextOnlyAlpha().length());
+
+  while (fitns < FITNESS_THRESHOLD) {
+    new_key = key;
+    int x = std::experimental::randint(0, period);
+    for (int i = 0; i < ALPHABET_LEN; ++i) {
+      new_key[x] = alphabet[i];
+      attempt = v.decodeNoAlpha(new_key);
+      double new_fit = Attacker::fitness(attempt);
+      if (new_fit > fitns) {
+        key = new_key;
+        fitns = new_fit;
+        std::cout << key << " ";
+      }
+    }
+  }
+
+  solution.first = key;
+  solution.second = v.decode(key);
+
+  return solution;
 }
 
 } // namespace attacks
