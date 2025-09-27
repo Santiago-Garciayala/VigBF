@@ -6,22 +6,30 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace attacks {
 const static std::string ALPHABET_U = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const static std::string ALPHABET_L = "abcdefghijklmnopqrstuvwxyz";
 const static std::string PROBABILITIES_FILE = "resources/probabilities.bin";
+const static std::string DICTIONARY_FILE =
+    "resources/dictionaries/dict_only_alpha";
 const static short ALPHABET_LEN = 26;
 const static int PROBABILITIES_SIZE =
     ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN;
 const static short FITNESS_UNFIT = -15;
+const static short FITNESS_THRESHOLD = -10;
+const static std::pair<std::string, std::string> NOT_FOUND = {"", "NOT FOUND"};
 extern std::array<double, PROBABILITIES_SIZE> probabilities;
+extern std::vector<std::string> dict_words;
 extern bool is_probabilities_loaded;
+extern bool is_dict_loaded;
 
 class Attacker {
 private:
   void load_probabilities();
-  std::string get_key_from_num(int num);
+  void load_dict();
+  std::string get_key_from_num(int num, bool upper = false);
 
 public:
   Attacker();
@@ -30,6 +38,9 @@ public:
   int static get_period(const std::string &text);
   std::pair<std::string, std::string>
   brute_force_single_thread(Vigenere &v, int period = 1, uint16_t limit = 8);
+  std::pair<std::string, std::string> dictionary_attack(Vigenere &v);
+  std::pair<std::string, std::string> crib_attack(Vigenere &v,
+                                                  const std::string &crib);
 };
 } // namespace attacks
 

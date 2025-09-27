@@ -8,6 +8,8 @@
 
 using namespace std;
 
+// TODO: change most strings to references so we stop cloning and wasting memory
+// all the time
 class Vigenere {
 
 private:

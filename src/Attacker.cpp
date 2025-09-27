@@ -1,8 +1,10 @@
 #include "Attacker.h"
 #include "Vigenere.h"
+#include "misc.h"
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -13,12 +15,21 @@
 namespace attacks {
 
 std::array<double, PROBABILITIES_SIZE> probabilities = {};
+std::vector<std::string> dict_words = {};
 bool is_probabilities_loaded = false;
+bool is_dict_loaded = false;
 
 void print_probabilities() {
   for (double num : probabilities) {
     std::cout << num << " ";
   }
+  cout << std::endl;
+}
+void print_dict() {
+  for (auto word : dict_words) {
+    std::cout << word << " ";
+  }
+  cout << std::endl;
 }
 
 Attacker::Attacker() {
@@ -31,15 +42,37 @@ Attacker::Attacker() {
 void Attacker::load_probabilities() {
   std::ifstream file(PROBABILITIES_FILE, std::ios::binary);
 
-  file.read(reinterpret_cast<char *>(probabilities.data()),
-            PROBABILITIES_SIZE * sizeof(double));
-
   if (!file) {
     std::cerr << "Error reading probabilities file: " << strerror(errno)
               << std::endl;
     std::cerr << "Bytes read: " << file.gcount() << std::endl;
+    return;
   }
+
+  file.read(reinterpret_cast<char *>(probabilities.data()),
+            PROBABILITIES_SIZE * sizeof(double));
+
   is_probabilities_loaded = true;
+}
+
+void Attacker::load_dict() {
+  std::ifstream file(DICTIONARY_FILE);
+
+  if (!file) {
+    std::cerr << "Error reading dictionary file: " << strerror(errno)
+              << std::endl;
+    std::cerr << "Bytes read: " << file.gcount() << std::endl;
+    return;
+  }
+
+  std::string line;
+  while (getline(file, line)) {
+    if (line.size() > 0) {
+      dict_words.push_back(line);
+    }
+  }
+
+  is_dict_loaded = true;
 }
 
 /**
@@ -53,8 +86,7 @@ void Attacker::load_probabilities() {
  */
 double Attacker::fitness(const std::string &text) {
   double result = 0;
-  std::string alphabet;
-  alphabet.assign(isupper(text[0]) ? ALPHABET_U : ALPHABET_L);
+  const std::string &alphabet = isupper(text[0]) ? ALPHABET_U : ALPHABET_L;
 
   for (int i = 0; i < text.size() - 3; ++i) {
     // this gives weird memory error for some reason
@@ -80,8 +112,7 @@ double Attacker::fitness(const std::string &text) {
 double Attacker::index_of_coincidence(const std::string &text) {
   std::array<int, ALPHABET_LEN> counts = {};
   int numer = 0, total = 0;
-  std::string alphabet;
-  alphabet.assign(isupper(text[0]) ? ALPHABET_U : ALPHABET_L);
+  const std::string &alphabet = isupper(text[0]) ? ALPHABET_U : ALPHABET_L;
 
   for (auto c : text) {
     counts[alphabet.find(c)] += 1;
@@ -119,9 +150,10 @@ int Attacker::get_period(const std::string &text) {
 
 // TODO: this doesnt produce the first series of A's after the length increases.
 // Eg: Z jumps to AB instead of AA.
-std::string Attacker::get_key_from_num(int num) {
+std::string Attacker::get_key_from_num(int num, bool upper) {
   std::string key;
   size_t len = 0;
+  const std::string &alphabet = upper ? ALPHABET_U : ALPHABET_L;
 
   // get length of key
   while (num >= pow(ALPHABET_LEN, len)) {
@@ -129,8 +161,8 @@ std::string Attacker::get_key_from_num(int num) {
   }
 
   for (int i = 1; i <= len; ++i) {
-    key.push_back(ALPHABET_U[num % static_cast<int>((pow(ALPHABET_LEN, i))) /
-                             pow(ALPHABET_LEN, i - 1)]);
+    key.push_back(alphabet[num % static_cast<int>((pow(ALPHABET_LEN, i))) /
+                           pow(ALPHABET_LEN, i - 1)]);
   }
 
   return key;
@@ -158,7 +190,7 @@ Attacker::brute_force_single_thread(Vigenere &v, int period, uint16_t limit) {
     cout << key << std::endl;
     fitns = Attacker::fitness(v.decodeNoAlpha(key));
     cout << "fitness: " << fitns << std::endl;
-    if (fitns > -10) {
+    if (fitns > FITNESS_THRESHOLD) {
       found = true;
       solution.first = key;
       solution.second = v.decode(key);
@@ -174,8 +206,7 @@ Attacker::brute_force_single_thread(Vigenere &v, int period, uint16_t limit) {
            << std::endl;
     }
     if (key_num >= limit_val) {
-      solution.first = "";
-      solution.second = "NOT FOUND";
+      solution = NOT_FOUND;
       cout << "KEY LENGTH LIMIT REACHED FOR BRUTE FORCE ATTACK. SOLUTION NOT "
               "FOUND."
            << std::endl
@@ -186,6 +217,85 @@ Attacker::brute_force_single_thread(Vigenere &v, int period, uint16_t limit) {
   }
 
   return solution;
+}
+
+std::pair<std::string, std::string> Attacker::dictionary_attack(Vigenere &v) {
+  std::pair<std::string, std::string> solution = NOT_FOUND;
+  std::string key;
+  double fitns = FITNESS_UNFIT;
+
+  if (!is_dict_loaded) {
+    load_dict();
+    // print_dict();
+  }
+
+  for (auto key : dict_words) {
+    fitns = Attacker::fitness(v.decodeNoAlpha(key));
+    /*
+    cout << key << std::endl;
+    cout << "fitness: " << fitns << std::endl;
+    if (key == "aani") {
+      cout << v.decodeNoAlpha(key) << std::endl;
+    }
+    */
+    if (fitns > FITNESS_THRESHOLD) {
+      solution.first = key;
+      solution.second = v.decode(key);
+      break;
+    }
+  }
+
+  return solution;
+}
+
+std::pair<std::string, std::string>
+Attacker::crib_attack(Vigenere &v, const std::string &crib) {
+  std::pair<std::string, std::string> solution;
+  std::string chunk;
+  std::string decrypted_chunk;
+  std::string decrypted_txt;
+  int chunk_choice;
+  double fitns;
+
+  chunk.reserve(crib.length());
+  decrypted_chunk.reserve(crib.length());
+
+  for (int i = 0; i < v.getTextOnlyAlpha().length() - crib.length(); ++i) {
+    chunk = v.getTextOnlyAlpha().substr(i, crib.length());
+    decrypted_chunk = Vigenere::staticDecode(chunk, crib);
+    std::cout << i + 1 << ": " << decrypted_chunk << "\t";
+  }
+  cout << std::endl;
+
+  chunk_choice = misc::getInt(
+      "Enter the number of the chunk that looks most like a key: ");
+  --chunk_choice;
+
+  while (chunk_choice < 0 ||
+         chunk_choice >= v.getTextOnlyAlpha().length() - crib.length()) {
+    std::cout << "Invalid choice. Enter a number that is listed on the screen."
+              << std::endl;
+    chunk_choice = misc::getInt(
+        "Enter the number of the chunk that looks most like a key: ");
+    --chunk_choice;
+  }
+
+  chunk =
+      v.getTextOnlyAlpha().substr(chunk_choice, chunk_choice + crib.length());
+  decrypted_chunk = Vigenere::staticDecode(chunk, crib);
+
+  decrypted_txt = v.decodeNoAlpha(decrypted_chunk);
+  fitns = Attacker::fitness(decrypted_txt);
+
+  cout << "fitness: " << fitns << std::endl;
+
+  if (fitns > FITNESS_THRESHOLD) {
+    solution.first = decrypted_chunk;
+    solution.second = decrypted_txt;
+    return solution;
+  }
+
+  return NOT_FOUND;
 }
 
 } // namespace attacks

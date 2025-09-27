@@ -69,16 +69,22 @@ int main(int argc, char *argv[]) {
     case 'T': {
       // TEST MODE
       std::string tesxt = misc::getTextFromFile("resources/books/pg22400.txt");
-      Vigenere v(misc::stringToUpper(tesxt));
+      tesxt = "hellomynameisthefollowingstringofnumbersthatifoundonthestreether"
+              "eyougo";
+      Vigenere v(misc::stringToLower(tesxt));
       attacks::Attacker a;
-      std::string encoded_text = v.encodeNoAlpha("ACB");
-      cout << "encoded text: " << encoded_text << std::endl;
+      std::string encoded_text = v.encodeNoAlpha("bogo");
+      // cout << "encoded text: " << encoded_text << std::endl;
       int period = a.get_period(encoded_text);
       cout << "period: " << period << std::endl;
       cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;
 
       Vigenere v2(encoded_text);
-      std::string attack_result = a.brute_force_single_thread(v2, 2, 3).second;
+      std::string attack_result;
+      // attack_result = a.brute_force_single_thread(v2, 2, 3).second;
+      // attack_result = a.dictionary_attack(v2).second;
+      attack_result =
+          a.crib_attack(v2, v.getTextOnlyAlpha().substr(4, 4)).first;
       cout << attack_result << std::endl;
 
       break;

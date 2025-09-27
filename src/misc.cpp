@@ -72,4 +72,27 @@ std::string stringToUpper(const std::string in) {
   std::transform(out.begin(), out.end(), out.begin(), ::toupper);
   return out;
 }
+std::string stringToLower(const std::string in) {
+  std::string out = in;
+  std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+  return out;
+}
+
+int getInt(std::string display, std::string invalid_txt) {
+  std::string in;
+  int out;
+  bool good_input = false;
+
+  std::cout << display;
+  while (!good_input) {
+    try {
+      std::cin >> in;
+      out = std::stoi(in);
+      good_input = true;
+    } catch (...) {
+      std::cout << invalid_txt;
+    }
+  }
+  return out;
+}
 } // namespace misc

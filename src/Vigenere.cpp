@@ -65,7 +65,7 @@ string Vigenere::staticDecode(string ciphertext, string key) {
   // main loop
   for (int i = 0; i < ciphertext.length(); ++i) {
     char c = (ciphertext[i] - key[i % key.length()] + 26) % 26;
-    c += 'a';
+    c += input_case;
     plaintext.push_back(c);
   }
 
@@ -88,7 +88,7 @@ string Vigenere::staticEncode(string plaintext, string key) {
   // main loop
   for (int i = 0; i < plaintext.length(); ++i) {
     char c = ((plaintext[i] - 'a') + (key[i % key.length()] - 'a')) % 26;
-    c += 'a';
+    c += input_case;
     ciphertext.push_back(c);
   }
 
