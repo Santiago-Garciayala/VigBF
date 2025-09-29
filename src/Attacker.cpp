@@ -322,7 +322,76 @@ std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
       if (new_fit > fitns) {
         key = new_key;
         fitns = new_fit;
-        std::cout << key << " ";
+        // std::cout << key << " ";
+      }
+    }
+  }
+
+  solution.first = key;
+  solution.second = v.decode(key);
+
+  return solution;
+}
+
+double Attacker::cosangle(vector<double> x, vector<double> y) {
+  double numerator = 0;
+  double length_x2 = 0;
+  double length_y2 = 0;
+  for (int i = 0; i < x.size(); ++i) {
+    numerator += x[i] * y[i];
+    length_x2 += x[i] * x[i];
+    length_y2 += y[i] * y[i];
+  }
+
+  return numerator / std::sqrt(length_x2 * length_y2);
+}
+
+std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
+                                                           int period) {
+  std::pair<std::string, std::string> solution = NOT_FOUND;
+  std::vector<array<double, ALPHABET_LEN>> frequencies = {};
+  std::vector<double> monofrequencies = {};
+  std::vector<std::string> slices(period, "");
+  const std::string &alphabet =
+      isupper(v.getTextOnlyAlpha()[0]) ? ALPHABET_U : ALPHABET_L;
+  std::string key;
+  frequencies.reserve(period);
+
+  // build slices with period again, done in get_period() originally
+  for (int i = 0; i < v.getTextOnlyAlpha().size(); ++i) {
+    slices[i % period] += v.getTextOnlyAlpha()[i];
+  }
+  for (int i = 0; i < ALPHABET_LEN; ++i) {
+    monofrequencies[i] = monofrequencies[i] / v.getTextOnlyAlpha().size();
+  }
+
+  // fill monofrequencies table
+  for (char c : v.getTextOnlyAlpha()) {
+    monofrequencies[alphabet.find(c)] += 1;
+  }
+
+  for (int i = 0; i < period; i++) {
+    array<double, ALPHABET_LEN> new_arr = {};
+    frequencies.push_back(new_arr);
+    for (int j = 0; j < slices[i].size(); ++j) {
+      frequencies[i][alphabet.find(slices[i][j])] += 1;
+    }
+    for (int j = 0; j < ALPHABET_LEN; ++j) {
+      frequencies[i][j] = frequencies[i][j] / slices[i].size();
+    }
+  }
+
+  key.resize(period, alphabet[0]);
+
+  for (int i = 0; i < period; ++i) {
+    for (int j = 0; j < ALPHABET_LEN; ++j) {
+      std::vector<double> test_table = {};
+      test_table.insert(test_table.end(), frequencies[i].begin() + j,
+                        frequencies[i].end());
+      test_table.insert(test_table.end(), frequencies[i].begin(),
+                        frequencies[i].begin() + j);
+      if (cosangle(monofrequencies, test_table) > 0.9) {
+        key[i] = alphabet[j];
       }
     }
   }

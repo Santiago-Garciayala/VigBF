@@ -14,8 +14,8 @@ const static std::string ALPHABET_L = "abcdefghijklmnopqrstuvwxyz";
 const static std::string PROBABILITIES_FILE = "resources/probabilities.bin";
 const static std::string DICTIONARY_FILE =
     "resources/dictionaries/dict_only_alpha";
-const static short ALPHABET_LEN = 26;
-const static int PROBABILITIES_SIZE =
+const static size_t ALPHABET_LEN = 26;
+const static size_t PROBABILITIES_SIZE =
     ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN;
 const static short FITNESS_UNFIT = -15;
 const static double FITNESS_THRESHOLD = -9.8;
@@ -30,6 +30,7 @@ private:
   void load_probabilities();
   void load_dict();
   std::string get_key_from_num(int num, bool upper = false);
+  double cosangle(vector<double> x, vector<double> y);
 
 public:
   Attacker();
@@ -43,6 +44,7 @@ public:
                                                   const std::string &crib);
   std::pair<std::string, std::string> variational_attack(Vigenere &v,
                                                          int period);
+  std::pair<std::string, std::string> stats_attack(Vigenere &v, int period);
 };
 } // namespace attacks
 
