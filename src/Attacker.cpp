@@ -352,23 +352,26 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
   std::vector<array<double, ALPHABET_LEN>> frequencies = {};
   std::vector<double> monofrequencies = {};
   std::vector<std::string> slices(period, "");
-  const std::string &alphabet =
-      isupper(v.getTextOnlyAlpha()[0]) ? ALPHABET_U : ALPHABET_L;
   std::string key;
+  std::string text = v.getTextOnlyAlpha();
+  const std::string &alphabet = isupper(text[0]) ? ALPHABET_U : ALPHABET_L;
   frequencies.reserve(period);
 
   // build slices with period again, done in get_period() originally
-  for (int i = 0; i < v.getTextOnlyAlpha().size(); ++i) {
-    slices[i % period] += v.getTextOnlyAlpha()[i];
+  for (int i = 0; i < text.size(); ++i) {
+    slices[i % period] += text[i];
   }
-  for (int i = 0; i < ALPHABET_LEN; ++i) {
-    monofrequencies[i] = monofrequencies[i] / v.getTextOnlyAlpha().size();
-  }
+  std::cout << "done building slices" << std::endl;
 
   // fill monofrequencies table
-  for (char c : v.getTextOnlyAlpha()) {
+  monofrequencies.resize(ALPHABET_LEN, 0);
+  for (char c : text) {
     monofrequencies[alphabet.find(c)] += 1;
   }
+  for (int i = 0; i < ALPHABET_LEN; ++i) {
+    monofrequencies[i] = monofrequencies[i] / text.size();
+  }
+  std::cout << "done filling monofrequencies" << std::endl;
 
   for (int i = 0; i < period; i++) {
     array<double, ALPHABET_LEN> new_arr = {};
@@ -380,6 +383,7 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
       frequencies[i][j] = frequencies[i][j] / slices[i].size();
     }
   }
+  std::cout << "done slices loop" << std::endl;
 
   key.resize(period, alphabet[0]);
 
@@ -392,9 +396,11 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
                         frequencies[i].begin() + j);
       if (cosangle(monofrequencies, test_table) > 0.9) {
         key[i] = alphabet[j];
+        std::cout << key << std::endl;
       }
     }
   }
+  std::cout << "done key loop" << std::endl;
 
   solution.first = key;
   solution.second = v.decode(key);

@@ -80,7 +80,8 @@ int main(int argc, char *argv[]) {
       int period = a.get_period(encoded_text);
       cout << "period: " << period << std::endl;
       cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;
-      cout << "fitness of encoded: " << a.fitness(v.encodeNoAlpha(key));
+      cout << "fitness of encoded: " << a.fitness(v.encodeNoAlpha(key))
+           << std::endl;
 
       Vigenere v2(encoded_text);
       std::string attack_result;
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]) {
       // attack_result = a.crib_attack(v2, v.getTextOnlyAlpha().substr(4,
       // 4)).first;
       //    attack_result = a.variational_attack(v2, period).second;
-      attack_result = a.stats_attack(v2, 6).second;
+      attack_result = a.stats_attack(v2, 6).first;
       cout << attack_result << std::endl;
 
       break;
