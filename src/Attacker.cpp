@@ -142,7 +142,7 @@ int Attacker::get_period(const std::string &text) {
       sum += index_of_coincidence(slices[j]);
     }
     double ioc = sum / period;
-    if (ioc > 1.6)
+    if (ioc > IOC_THRESHOLD)
       found = true;
   }
 

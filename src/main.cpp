@@ -69,15 +69,18 @@ int main(int argc, char *argv[]) {
     case 'T': {
       // TEST MODE
       std::string tesxt = misc::getTextFromFile("resources/books/pg22400.txt");
-      tesxt = "hellomynameisthefollowingstringofnumbersthatifoundonthestreether"
-              "eyougo";
+      //      tesxt =
+      //      "hellomynameisthefollowingstringofnumbersthatifoundonthestreether"
+      //             "eyougo";
       Vigenere v(misc::stringToLower(tesxt));
       attacks::Attacker a;
-      std::string encoded_text = v.encodeNoAlpha("bogos");
+      std::string key = "bogosl";
+      std::string encoded_text = v.encodeNoAlpha(key);
       // cout << "encoded text: " << encoded_text << std::endl;
       int period = a.get_period(encoded_text);
       cout << "period: " << period << std::endl;
       cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;
+      cout << "fitness of encoded: " << a.fitness(v.encodeNoAlpha(key));
 
       Vigenere v2(encoded_text);
       std::string attack_result;
@@ -85,7 +88,8 @@ int main(int argc, char *argv[]) {
       // attack_result = a.dictionary_attack(v2).second;
       // attack_result = a.crib_attack(v2, v.getTextOnlyAlpha().substr(4,
       // 4)).first;
-      attack_result = a.variational_attack(v2, period).second;
+      //    attack_result = a.variational_attack(v2, period).second;
+      attack_result = a.stats_attack(v2, 6).second;
       cout << attack_result << std::endl;
 
       break;

@@ -102,7 +102,7 @@ string Vigenere::decode(string key) {
 }
 
 string Vigenere::encode(string key) {
-  string encoded = staticDecode(this->text_only_alpha, key);
+  string encoded = staticEncode(this->text_only_alpha, key);
   encoded = addNonAlpha(encoded);
   return encoded;
 }
@@ -113,7 +113,7 @@ string Vigenere::decodeNoAlpha(string key) {
 }
 
 string Vigenere::encodeNoAlpha(string key) {
-  string encoded = staticDecode(this->text_only_alpha, key);
+  string encoded = staticEncode(this->text_only_alpha, key);
   return encoded;
 }
 

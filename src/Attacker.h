@@ -19,6 +19,7 @@ const static size_t PROBABILITIES_SIZE =
     ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN;
 const static short FITNESS_UNFIT = -15;
 const static double FITNESS_THRESHOLD = -9.8;
+const static double IOC_THRESHOLD = 1.6;
 const static std::pair<std::string, std::string> NOT_FOUND = {"", "NOT FOUND"};
 extern std::array<double, PROBABILITIES_SIZE> probabilities;
 extern std::vector<std::string> dict_words;
