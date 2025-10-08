@@ -128,25 +128,27 @@ double Attacker::index_of_coincidence(const std::string &text) {
 }
 
 int Attacker::get_period(const std::string &text) {
-  bool found = false;
-  int period = 0;
+  int best_period = 1;
+  double best_ioc = IOC_THRESHOLD;
 
-  while (!found) {
-    period += 1;
-    std::vector<std::string> slices(period, "");
-    for (int i = 0; i < text.size(); ++i) {
-      slices[i % period] += text[i];
+  for (int i = 1; i <= MAX_PERIOD; ++i) {
+    std::cout << "period check: " << i << std::endl;
+    std::vector<std::string> slices(i, "");
+    for (int j = 0; j < text.size(); ++j) {
+      slices[j % i] += text[j];
     }
     double sum = 0;
-    for (int j = 0; j < period; ++j) {
+    for (int j = 0; j < i; ++j) {
       sum += index_of_coincidence(slices[j]);
     }
-    double ioc = sum / period;
-    if (ioc > IOC_THRESHOLD)
-      found = true;
+    double ioc = sum / i;
+    if (ioc > best_ioc) {
+      best_period = i;
+      best_ioc = ioc;
+    }
   }
 
-  return period;
+  return best_period;
 }
 
 // TODO: this doesnt produce the first series of A's after the length increases.
@@ -318,6 +320,7 @@ std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
       new_key[x] = alphabet[i];
       attempt = v.decodeNoAlpha(new_key);
       double new_fit = Attacker::fitness(attempt);
+      std::cout << new_fit << " : " << new_key << std::endl;
       if (new_fit > fitns) {
         key = new_key;
         fitns = new_fit;
@@ -372,6 +375,7 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
   }
   std::cout << "done filling monofrequencies" << std::endl;
 
+  // make slices
   for (int i = 0; i < period; i++) {
     array<double, ALPHABET_LEN> new_arr = {};
     frequencies.push_back(new_arr);
@@ -384,20 +388,30 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
   }
   std::cout << "done slices loop" << std::endl;
 
+  // find key
   key.resize(period, alphabet[0]);
 
   for (int i = 0; i < period; ++i) {
+    double best_cosangle = COSANGLE_GOOD;
+    int best_j = 0;
+
     for (int j = 0; j < ALPHABET_LEN; ++j) {
       std::vector<double> test_table = {};
       test_table.insert(test_table.end(), frequencies[i].begin() + j,
                         frequencies[i].end());
       test_table.insert(test_table.end(), frequencies[i].begin(),
                         frequencies[i].begin() + j);
-      if (cosangle(monofrequencies, test_table) > 0.9) {
-        key[i] = alphabet[j];
+
+      double cos = cosangle(monofrequencies, test_table);
+
+      if (cos > best_cosangle) {
+        best_cosangle = cos;
+        best_j = j;
         std::cout << key << std::endl;
       }
     }
+
+    key[i] = alphabet[best_j];
   }
   std::cout << "done key loop" << std::endl;
 
