@@ -352,6 +352,7 @@ std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
   std::string key;
   std::string new_key;
   std::string attempt;
+  uint32_t attempt_no = 0;
   double fitns = FITNESS_UNFIT;
 
   key.resize(period, alphabet[0]);
@@ -360,16 +361,29 @@ std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
   while (fitns < FITNESS_THRESHOLD) {
     new_key = key;
     int x = std::experimental::randint(0, period);
+
     for (int i = 0; i < ALPHABET_LEN; ++i) {
+      ++attempt_no;
+
       new_key[x] = alphabet[i];
       attempt = v.decodeNoAlpha(new_key);
       double new_fit = Attacker::fitness(attempt);
-      std::cout << new_fit << " : " << new_key << std::endl;
+      // std::cout << new_fit << " : " << new_key << std::endl;
+      //
       if (new_fit > fitns) {
         key = new_key;
         fitns = new_fit;
         // std::cout << key << " ";
       }
+    }
+
+    // timeout
+    // timeout value is arbitrary, might be changed later
+    if (attempt_no >= period * ALPHABET_LEN * 5) {
+      std::cout << "TIMEOUT REACHED FOR VARIATIONAL ATTACK. PERIOD IS LIKELY "
+                   "INCORRECT."
+                << std::endl;
+      return NOT_FOUND;
     }
   }
 
