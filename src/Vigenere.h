@@ -34,6 +34,7 @@ public:
   string getText();
   void setText(string text);
   string getTextOnlyAlpha();
+  string &getTextOnlyAlpha_ref();
 };
 
 #endif

@@ -251,6 +251,7 @@ std::pair<std::string, std::string> Attacker::dictionary_attack(Vigenere &v) {
 
 std::pair<std::string, std::string>
 Attacker::crib_attack(Vigenere &v, const std::string &crib) {
+  const std::string &text = v.getTextOnlyAlpha_ref();
   std::pair<std::string, std::string> solution;
   std::string chunk;
   std::string decrypted_chunk;
@@ -261,8 +262,8 @@ Attacker::crib_attack(Vigenere &v, const std::string &crib) {
   chunk.reserve(crib.length());
   decrypted_chunk.reserve(crib.length());
 
-  for (int i = 0; i < v.getTextOnlyAlpha().length() - crib.length(); ++i) {
-    chunk = v.getTextOnlyAlpha().substr(i, crib.length());
+  for (int i = 0; i < text.length() - crib.length(); ++i) {
+    chunk = text.substr(i, crib.length());
     decrypted_chunk = Vigenere::staticDecode(chunk, crib);
     std::cout << i + 1 << ": " << decrypted_chunk << "\t";
   }
@@ -272,8 +273,7 @@ Attacker::crib_attack(Vigenere &v, const std::string &crib) {
       "Enter the number of the chunk that looks most like a key: ");
   --chunk_choice;
 
-  while (chunk_choice < 0 ||
-         chunk_choice >= v.getTextOnlyAlpha().length() - crib.length()) {
+  while (chunk_choice < 0 || chunk_choice >= text.length() - crib.length()) {
     std::cout << "Invalid choice. Enter a number that is listed on the screen."
               << std::endl;
     chunk_choice = misc::getInt(
@@ -281,8 +281,7 @@ Attacker::crib_attack(Vigenere &v, const std::string &crib) {
     --chunk_choice;
   }
 
-  chunk =
-      v.getTextOnlyAlpha().substr(chunk_choice, chunk_choice + crib.length());
+  chunk = text.substr(chunk_choice, chunk_choice + crib.length());
   decrypted_chunk = Vigenere::staticDecode(chunk, crib);
 
   decrypted_txt = v.decodeNoAlpha(decrypted_chunk);
@@ -353,7 +352,7 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
   std::vector<double> monofrequencies = {};
   std::vector<std::string> slices(period, "");
   std::string key;
-  std::string text = v.getTextOnlyAlpha();
+  const std::string &text = v.getTextOnlyAlpha_ref();
   const std::string &alphabet = isupper(text[0]) ? ALPHABET_U : ALPHABET_L;
   frequencies.reserve(period);
 

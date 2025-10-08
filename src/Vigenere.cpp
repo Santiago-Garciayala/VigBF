@@ -136,3 +136,4 @@ void Vigenere::setText(string text) {
 }
 
 string Vigenere::getTextOnlyAlpha() { return this->text_only_alpha; }
+string &Vigenere::getTextOnlyAlpha_ref() { return this->text_only_alpha; }
