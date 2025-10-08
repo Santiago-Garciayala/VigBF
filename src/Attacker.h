@@ -41,6 +41,7 @@ public:
   double static fitness(const std::string &text);
   double static index_of_coincidence(const std::string &text);
   int static get_period(const std::string &text);
+  int static get_period_kasiski(const std::string &text);
   std::pair<std::string, std::string>
   brute_force_single_thread(Vigenere &v, int period = 1, uint16_t limit = 8);
   std::pair<std::string, std::string> dictionary_attack(Vigenere &v);

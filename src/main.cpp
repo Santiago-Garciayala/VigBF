@@ -74,10 +74,10 @@ int main(int argc, char *argv[]) {
       //             "eyougo";
       Vigenere v(misc::stringToLower(tesxt));
       attacks::Attacker a;
-      std::string key = "bototogs";
+      std::string key = "migogosz";
       std::string encoded_text = v.encodeNoAlpha(key);
       // cout << "encoded text: " << encoded_text << std::endl;
-      int period = a.get_period(encoded_text);
+      int period = a.get_period_kasiski(encoded_text);
       // period = 6;
       cout << "period: " << period << std::endl;
       cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;

@@ -151,8 +151,52 @@ int Attacker::get_period(const std::string &text) {
   return best_period;
 }
 
-// TODO: this doesnt produce the first series of A's after the length increases.
-// Eg: Z jumps to AB instead of AA.
+int Attacker::get_period_kasiski(const std::string &text) {
+  std::unordered_map<std::string, std::vector<int>> sequences;
+  std::vector<int> distances;
+  uint8_t best_period = 1;
+  int best_count = 0;
+
+  // Find all 3-character sequences and their positions
+  for (int i = 0; i < text.length() - 3; ++i) {
+    std::string seq = text.substr(i, 3);
+    sequences[seq].push_back(i);
+  }
+
+  // Calculate distances between repeated sequences
+  for (const auto &[seq, positions] : sequences) {
+    if (positions.size() > 1) {
+      for (int i = 1; i < positions.size(); ++i) {
+        distances.push_back(positions[i] - positions[i - 1]);
+      }
+    }
+  }
+
+  if (distances.empty()) {
+    std::cout << "No repeated sequences found, defaulting to IOC method"
+              << std::endl;
+    return get_period(text);
+  }
+  // Find most common divisor (simplified)
+  for (int period = 2; period <= MAX_PERIOD; ++period) {
+    int count = 0;
+    for (int dist : distances) {
+      if (dist % period == 0) {
+        count++;
+      }
+    }
+
+    if (count > best_count) {
+      best_count = count;
+      best_period = period;
+    }
+  }
+
+  return best_period;
+}
+
+// TODO: this doesnt produce the first series of A's after the length
+// increases. Eg: Z jumps to AB instead of AA.
 std::string Attacker::get_key_from_num(int num, bool upper) {
   std::string key;
   size_t len = 0;
