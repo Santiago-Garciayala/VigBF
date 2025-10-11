@@ -2,8 +2,11 @@
 #include "Attacker.h"
 #include "misc.h"
 #include <array>
+#include <bits/getopt_core.h>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <queue>
 #include <string>
 
 extern "C" {
@@ -13,57 +16,117 @@ extern "C" {
 
 using namespace std;
 
+void printHelp();
 void handholdMode();
 void known_key_handhold();
 void unknown_key_handhold();
+void perform_attacks(string input, queue<int> attack_queue);
+void perform_attacks(vector<string> inputs, queue<int> attack_queue);
 
-const char *SHORT_OPTS = "ed:f:m:l:r:t:ThHv";
+const char *SHORT_OPTS = "ed:f:o:m:p:r:t:ThHvs:";
 const struct option LONG_OPTS[] = {{"encode", no_argument, nullptr, 'e'},
                                    {"decode", no_argument, nullptr, 'd'},
                                    {"input", required_argument, nullptr, 'i'},
                                    {"file", required_argument, nullptr, 'f'},
+                                   {"output", required_argument, nullptr, 'o'},
                                    {"mode", required_argument, nullptr, 'm'},
-                                   {"length", required_argument, nullptr, 'l'},
+                                   {"period", required_argument, nullptr, 'l'},
                                    {"range", required_argument, nullptr, 'r'},
                                    {"threads", required_argument, nullptr, 't'},
                                    {"help", optional_argument, nullptr, 'h'},
                                    {"Handhold", no_argument, nullptr, 'H'},
                                    {"verbose", no_argument, nullptr, 'v'},
+                                   {"serial", optional_argument, nullptr, 's'},
                                    {0, 0, 0, 0}};
+const size_t DEFAULT_THREADS = 1;
 
 int main(int argc, char *argv[]) {
   char c;
   string out = "";
-  string ciphertext;
-  string plaintext;
+  string outfile = "";
+  vector<string> inputs;
+  vector<int> periods;
+  vector<pair<int, int>> ranges;
+  queue<int> attack_queue;
+  size_t threads = DEFAULT_THREADS;
+  bool verbose = false;
 
   while ((c = getopt_long(argc, argv, SHORT_OPTS, LONG_OPTS, nullptr)) != -1) {
     switch (c) {
     case 'e':
-
+      attack_queue.push(attacks::ENCODE);
       break;
     case 'd':
+      attack_queue.push(attacks::DECODE);
+      break;
+    case 'i':
       // insert code here
-
+      inputs.push_back(optarg);
       break;
     case 'f':
-      // insert code here
-
+      inputs.push_back(misc::getTextFromFile(optarg));
       break;
     case 'm':
-      // insert code here
+      uint8_t attack_num;
+      try {
+        attack_num = stoi(optarg);
+      } catch (...) {
+        cerr << "Invalid input for attack type: " << optarg << endl;
+        break;
+      }
+      if (attack_num >= attacks::ENCODE && attack_num < attacks::ATTACKS_LAST) {
+        inputs.push_back(optarg);
+      } else {
+        cerr << "Invalid attacks number: " << optarg
+             << ". Valid attack numbers: " << attacks::ENCODE << "-"
+             << attacks::ATTACKS_LAST - 1 << endl;
+      }
+      break;
+    case 'p':
+      uint8_t period;
+      try {
+        period = stoi(optarg);
+      } catch (...) {
+        cerr << "Invalid input for period: " << optarg << endl;
+        break;
+      }
+      periods.push_back(period);
 
       break;
-    case 'l':
-      // insert code here
+    case 'r': {
+      uint8_t low, high;
+      try {
+        string optarg_s = optarg;
+        vector<string> nums = misc::split(optarg_s, "-");
+        if (nums.size() != 2) {
+          cerr << "ERROR: Range should be inputted as X-Y. Input read: "
+               << optarg << endl;
+          break;
+        }
+
+        low = stoi(nums[0]);
+        high = stoi(nums[1]);
+
+      } catch (...) {
+        cerr << "ERROR: Range should be inputted as X-Y, where X and Y are "
+                "whole numbers. Input read: "
+             << optarg << endl;
+      }
+
+      pair<int, int> r(low, high);
+      ranges.push_back(r);
 
       break;
-    case 'r':
-      // insert code here
-
-      break;
+    }
     case 't':
-      // insert code here
+      size_t t;
+      try {
+        t = stoi(optarg);
+      } catch (...) {
+        cerr << "Invalid input for threads: " << optarg << endl;
+        break;
+      }
+      threads = t;
 
       break;
     case 'T': {
@@ -97,8 +160,7 @@ int main(int argc, char *argv[]) {
       break;
     }
     case 'h':
-      // insert code here
-
+      printHelp();
       break;
     case 'H':
       handholdMode();
@@ -106,22 +168,42 @@ int main(int argc, char *argv[]) {
 
       break;
     case 'v':
-      // insert code here
-
+      verbose = true;
+      break;
+    case 's':
+      threads = 1;
       break;
     case '?':
-      cerr << "Invalid option: " << optopt << ". Use -h for help.\n";
+      cerr << "Invalid option: " << char(optopt) << ". Use -h for help.\n";
+      exit(EXIT_SUCCESS);
       break;
     default:
-      cerr << "Invalid option: " << optopt << ". Use -h for help.\n";
+      cerr << "Invalid option: " << char(optopt) << ". Use -h for help.\n";
+      exit(EXIT_SUCCESS);
       break;
     }
   }
 
-  cout << out << "\n" << endl;
+  if (inputs.size() == 0) {
+    cerr << "ERROR: No input provided. Use -i for direct input, -f for input "
+            "from file or -h for help."
+         << endl;
+  }
+
+  if (attack_queue.size() > 0) {
+    perform_attacks(inputs, attack_queue);
+  }
+
+  if (outfile == "") {
+    cout << out << "\n" << endl;
+  } else {
+    misc::writeToFile(out, outfile);
+  }
 
   return 0;
 }
+
+void printHelp() {}
 
 void handholdMode() {
   bool hasKey;
@@ -202,3 +284,6 @@ void unknown_key_handhold() {
     text = tmp;
   }
 }
+void perform_attacks(string input, queue<int> attack_queue) {}
+
+void perform_attacks(vector<string> inputs, queue<int> attack_queue) {}

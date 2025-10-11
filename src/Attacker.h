@@ -24,6 +24,18 @@ const static uint8_t MAX_PERIOD = 32;
 const static double IOC_THRESHOLD = 1.6;
 const static double COSANGLE_GOOD = 0.8;
 const static std::pair<std::string, std::string> NOT_FOUND = {"", "NOT FOUND"};
+enum Attacks {
+  ENCODE,
+  DECODE,
+  BF_ATTACK,
+  DICT_ATTACK,
+  CRIB_ATTACK,
+  VARIATIONAL_ATTACK,
+  STATS_ATTACK,
+  // if adding new attacks it must be added before ATTACKS_LAST
+  ATTACKS_LAST
+};
+
 extern std::array<double, PROBABILITIES_SIZE> probabilities;
 extern std::vector<std::string> dict_words;
 extern bool is_probabilities_loaded;

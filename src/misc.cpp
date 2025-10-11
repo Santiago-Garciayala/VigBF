@@ -6,6 +6,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <vector>
 
 namespace misc {
 
@@ -67,6 +68,16 @@ std::string getTextFromFile(std::string filename) {
 
   return text;
 }
+
+void writeToFile(std::string in, std::string filename) {
+  std::ofstream file;
+  file.open(filename);
+
+  file << in;
+
+  file.close();
+}
+
 std::string stringToUpper(const std::string in) {
   std::string out = in;
   std::transform(out.begin(), out.end(), out.begin(), ::toupper);
@@ -94,5 +105,22 @@ int getInt(std::string display, std::string invalid_txt) {
     }
   }
   return out;
+}
+
+// from: https://stackoverflow.com/a/46931770
+std::vector<std::string> split(const std::string &s,
+                               const std::string &delimiter) {
+  size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+  std::string token;
+  std::vector<std::string> res;
+
+  while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+    token = s.substr(pos_start, pos_end - pos_start);
+    pos_start = pos_end + delim_len;
+    res.push_back(token);
+  }
+
+  res.push_back(s.substr(pos_start));
+  return res;
 }
 } // namespace misc
