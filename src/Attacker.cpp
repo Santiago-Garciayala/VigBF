@@ -76,6 +76,15 @@ void Attacker::load_dict() {
   is_dict_loaded = true;
 }
 
+bool Attacker::result_found(std::pair<std::string, std::string> in) {
+  if (in.first != NOT_FOUND.first)
+    return true;
+  if (in.second != NOT_FOUND.second)
+    return true;
+
+  return false;
+}
+
 /**
  *Determines how close a body of text is to valid english text.
  *The return value should be around -9.6 for valid english text.
@@ -477,6 +486,74 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
   solution.second = v.decode(key);
 
   return solution;
+}
+
+pair<string, string>
+Attacker::perform_attacks(string input, queue<int> attack_queue, uint8_t period,
+                          pair<uint8_t, uint8_t> range, std::string crib) {
+  Vigenere v(input);
+  attacks::Attacker a;
+  std::pair<std::string, std::string> res = NOT_FOUND;
+
+  while (!attack_queue.empty() && !result_found(res)) {
+    uint8_t attack = attack_queue.front();
+    attack_queue.pop();
+
+    switch (attack) {
+    case BF_ATTACK:
+      if (period == 0) {
+        res = a.brute_force_single_thread(v);
+      } else {
+        res = a.brute_force_single_thread(v, period);
+      }
+      break;
+    case DICT_ATTACK:
+      res = a.dictionary_attack(v);
+      break;
+    case CRIB_ATTACK:
+      res = a.crib_attack(v, crib);
+
+      break;
+    case VARIATIONAL_ATTACK:
+      if (period == 0) {
+        period = get_period_kasiski(v.getTextOnlyAlpha());
+      }
+      res = a.variational_attack(v, period);
+
+      break;
+
+    case STATS_ATTACK:
+      if (period == 0) {
+        period = get_period_kasiski(v.getTextOnlyAlpha());
+      }
+      res = a.stats_attack(v, period);
+
+      break;
+    }
+  }
+
+  return res;
+}
+
+pair<string, string> Attacker::perform_attacks(vector<string> inputs,
+                                               queue<int> attack_queue,
+                                               uint8_t period,
+                                               pair<uint8_t, uint8_t> range,
+                                               std::string crib, bool all) {
+  if (inputs.size() == 1)
+    return perform_attacks(inputs[0], attack_queue, period, range, crib);
+
+  if (inputs.size() != attack_queue.size() && !all) {
+    cout << "WARNING: The number of inputs is not the same as the number of "
+            "attacks."
+         << endl;
+    cout << "There might be unused inputs or attacks. " << endl;
+    cout << "If you wish to have all these attacks performed on all the "
+            "inputs, use -a / --all"
+         << endl;
+  }
+
+  return NOT_FOUND;
 }
 
 } // namespace attacks

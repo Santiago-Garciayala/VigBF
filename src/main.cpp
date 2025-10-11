@@ -1,6 +1,7 @@
 #include "./Vigenere.h"
 #include "Attacker.h"
 #include "misc.h"
+#include <algorithm>
 #include <array>
 #include <bits/getopt_core.h>
 #include <cstdint>
@@ -20,47 +21,54 @@ void printHelp();
 void handholdMode();
 void known_key_handhold();
 void unknown_key_handhold();
-void perform_attacks(string input, queue<int> attack_queue);
-void perform_attacks(vector<string> inputs, queue<int> attack_queue);
+string mode_to_text(uint8_t mode);
+void set_mode(uint8_t *mode, uint8_t new_mode);
 
-const char *SHORT_OPTS = "ed:f:o:m:p:r:t:ThHvs:";
-const struct option LONG_OPTS[] = {{"encode", no_argument, nullptr, 'e'},
-                                   {"decode", no_argument, nullptr, 'd'},
-                                   {"input", required_argument, nullptr, 'i'},
-                                   {"file", required_argument, nullptr, 'f'},
-                                   {"output", required_argument, nullptr, 'o'},
-                                   {"mode", required_argument, nullptr, 'm'},
-                                   {"period", required_argument, nullptr, 'l'},
-                                   {"range", required_argument, nullptr, 'r'},
-                                   {"threads", required_argument, nullptr, 't'},
-                                   {"help", optional_argument, nullptr, 'h'},
-                                   {"Handhold", no_argument, nullptr, 'H'},
-                                   {"verbose", no_argument, nullptr, 'v'},
-                                   {"serial", optional_argument, nullptr, 's'},
-                                   {0, 0, 0, 0}};
+const char *SHORT_OPTS = "edi:f:o:m:p:r:c:C:t:ThHvs:a";
+const struct option LONG_OPTS[] = {
+    {"encode", no_argument, nullptr, 'e'},
+    {"decode", no_argument, nullptr, 'd'},
+    {"input", required_argument, nullptr, 'i'},
+    {"file", required_argument, nullptr, 'f'},
+    {"output", required_argument, nullptr, 'o'},
+    {"mode", required_argument, nullptr, 'm'},
+    {"period", required_argument, nullptr, 'l'},
+    {"range", required_argument, nullptr, 'r'},
+    {"crib", required_argument, nullptr, 'c'},
+    {"crib-file", required_argument, nullptr, 'C'},
+    {"threads", required_argument, nullptr, 't'},
+    {"help", optional_argument, nullptr, 'h'},
+    {"Handhold", no_argument, nullptr, 'H'},
+    {"verbose", no_argument, nullptr, 'v'},
+    {"serial", optional_argument, nullptr, 's'},
+    {"all", no_argument, nullptr, 'a'},
+    {0, 0, 0, 0}};
+enum Modes { NOT_SET, ENCODE, DECODE, ATTACK };
 const size_t DEFAULT_THREADS = 1;
 
 int main(int argc, char *argv[]) {
   char c;
+  uint8_t mode = NOT_SET;
   string out = "";
   string outfile = "";
   vector<string> inputs;
-  vector<int> periods;
-  vector<pair<int, int>> ranges;
   queue<int> attack_queue;
+  uint8_t period = 0;
+  pair<uint8_t, uint8_t> range = {0, 0};
+  string crib = "";
   size_t threads = DEFAULT_THREADS;
   bool verbose = false;
+  bool all = false;
 
   while ((c = getopt_long(argc, argv, SHORT_OPTS, LONG_OPTS, nullptr)) != -1) {
     switch (c) {
     case 'e':
-      attack_queue.push(attacks::ENCODE);
+      set_mode(&mode, ENCODE);
       break;
     case 'd':
-      attack_queue.push(attacks::DECODE);
+      set_mode(&mode, DECODE);
       break;
     case 'i':
-      // insert code here
       inputs.push_back(optarg);
       break;
     case 'f':
@@ -68,29 +76,52 @@ int main(int argc, char *argv[]) {
       break;
     case 'm':
       uint8_t attack_num;
+
+      set_mode(&mode, ATTACK);
+      if (mode != ATTACK)
+        break;
+
       try {
         attack_num = stoi(optarg);
       } catch (...) {
         cerr << "Invalid input for attack type: " << optarg << endl;
         break;
       }
-      if (attack_num >= attacks::ENCODE && attack_num < attacks::ATTACKS_LAST) {
+      if (attack_num >= attacks::BF_ATTACK &&
+          attack_num < attacks::ATTACKS_LAST) {
         inputs.push_back(optarg);
       } else {
         cerr << "Invalid attacks number: " << optarg
-             << ". Valid attack numbers: " << attacks::ENCODE << "-"
+             << ". Valid attack numbers: " << attacks::BF_ATTACK << "-"
              << attacks::ATTACKS_LAST - 1 << endl;
+        cerr << "Use -h for help and to see which attack corresponds to what "
+                "number."
+             << endl;
       }
       break;
     case 'p':
-      uint8_t period;
+      uint8_t p;
       try {
-        period = stoi(optarg);
+        p = stoi(optarg);
       } catch (...) {
         cerr << "Invalid input for period: " << optarg << endl;
         break;
       }
-      periods.push_back(period);
+
+      if (p <= 0) {
+        cerr << "ERROR: Period cannot be less than or equal to 0. Period "
+                "entered: "
+             << p << endl;
+        break;
+      }
+
+      if (period == 0) {
+        period = p;
+      } else {
+        cout << "WARNING: More than one period specified. Only the first one ("
+             << period << ") will be used. " << endl;
+        cout << "You can specify a range of periods using -r / --range" << endl;
+      }
 
       break;
     case 'r': {
@@ -107,6 +138,19 @@ int main(int argc, char *argv[]) {
         low = stoi(nums[0]);
         high = stoi(nums[1]);
 
+        if (low <= 0 || high <= 0) {
+          cerr << "ERROR: Numbers in range cannot be less than or equal to 0. "
+               << endl;
+          cerr << "Numbers entered: " << low << ", " << high << endl;
+          break;
+        }
+
+        if (nums[0] > nums[1]) {
+          uint8_t temp = low;
+          low = high;
+          high = temp;
+        }
+
       } catch (...) {
         cerr << "ERROR: Range should be inputted as X-Y, where X and Y are "
                 "whole numbers. Input read: "
@@ -114,10 +158,40 @@ int main(int argc, char *argv[]) {
       }
 
       pair<int, int> r(low, high);
-      ranges.push_back(r);
+
+      if (range.first == 0 && range.second == 0) {
+        range = r;
+      } else {
+        cout << "WARNING: More than one range specified. Only the first one ("
+             << range.first << "-" << range.second << ") will be used. "
+             << endl;
+      }
 
       break;
     }
+    case 'c':
+      if (crib != "") {
+        cout << "WARNING: Crib already specified. Only the first crib will be "
+                "used."
+             << endl;
+        cout << "CRIB: \n\n" << crib << endl;
+        break;
+      }
+      crib = optarg;
+
+      break;
+
+    case 'C':
+      if (crib != "") {
+        cout << "WARNING: Crib already specified. Only the first crib will be "
+                "used."
+             << endl;
+        cout << "CRIB: \n\n" << crib << endl;
+        break;
+      }
+      crib = misc::getTextFromFile(optarg);
+
+      break;
     case 't':
       size_t t;
       try {
@@ -165,7 +239,6 @@ int main(int argc, char *argv[]) {
     case 'H':
       handholdMode();
       exit(EXIT_SUCCESS);
-
       break;
     case 'v':
       verbose = true;
@@ -175,11 +248,11 @@ int main(int argc, char *argv[]) {
       break;
     case '?':
       cerr << "Invalid option: " << char(optopt) << ". Use -h for help.\n";
-      exit(EXIT_SUCCESS);
+      exit(EXIT_FAILURE);
       break;
     default:
       cerr << "Invalid option: " << char(optopt) << ". Use -h for help.\n";
-      exit(EXIT_SUCCESS);
+      exit(EXIT_FAILURE);
       break;
     }
   }
@@ -188,19 +261,75 @@ int main(int argc, char *argv[]) {
     cerr << "ERROR: No input provided. Use -i for direct input, -f for input "
             "from file or -h for help."
          << endl;
+    exit(EXIT_FAILURE);
   }
 
-  if (attack_queue.size() > 0) {
-    perform_attacks(inputs, attack_queue);
+  // MODE HANDLING
+  if (mode == ENCODE) {
+    if (inputs.size() != 2) {
+      cerr << "ERROR: Not enough inputs provided while in encode mode." << endl;
+      cerr << "Make sure you provide text and a key, in that order." << endl;
+      cerr << "To provide direct input use -i. To provide input from file use "
+              "-f. Use -h for help."
+           << endl;
+      exit(EXIT_FAILURE);
+    }
+
+    Vigenere v(inputs[0]);
+    out = v.encode(inputs[1]);
+
+  } else if (mode == DECODE) {
+    if (inputs.size() != 2) {
+      cerr << "ERROR: Not enough inputs provided while in decode mode." << endl;
+      cerr << "Make sure you provide text and a key, in that order." << endl;
+      cerr << "To provide direct input use -i. To provide input from file use "
+              "-f. Use -h for help."
+           << endl;
+      exit(EXIT_FAILURE);
+    }
+
+    Vigenere v(inputs[0]);
+    out = v.decode(inputs[1]);
+
+  } else if (mode == ATTACK) {
+    // check that there are attacks to do
+    if (attack_queue.size() <= 0) {
+      cerr << "ERROR: No attacks selected when in Attack mode." << endl;
+      exit(EXIT_FAILURE);
+    }
+
+    // check if there is a crib attack in the queue so we can check if a crib
+    // was provided
+    vector<int> attacks_q_vec = misc::queue_to_vec(attack_queue);
+    if (std::find(attacks_q_vec.begin(), attacks_q_vec.end(),
+                  attacks::CRIB_ATTACK) == attacks_q_vec.end()) {
+      if (crib == "") {
+        cerr << "ERROR: No crib was provided when trying to use a crib attack."
+             << endl;
+        cerr << "Use -c to provide a crib directly or -C to get the crib from "
+                "a file."
+             << endl;
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    attacks::Attacker::perform_attacks(inputs, attack_queue, period, range,
+                                       crib, all);
+
+  } else {
+    cerr << "ERROR: No mode set. Use -h for help." << endl;
+    exit(EXIT_FAILURE);
   }
 
+  // OUTPUT STAGE
   if (outfile == "") {
     cout << out << "\n" << endl;
   } else {
     misc::writeToFile(out, outfile);
+    cout << "Wrote output to " << outfile << endl;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 void printHelp() {}
@@ -284,6 +413,28 @@ void unknown_key_handhold() {
     text = tmp;
   }
 }
-void perform_attacks(string input, queue<int> attack_queue) {}
 
-void perform_attacks(vector<string> inputs, queue<int> attack_queue) {}
+string mode_to_text(uint8_t mode) {
+
+  switch (mode) {
+  case NOT_SET:
+    return "NOT SET";
+  case ENCODE:
+    return "ENCODE";
+  case DECODE:
+    return "DECODE";
+  case ATTACK:
+    return "ATTACK";
+  }
+  return "NOT SET";
+}
+
+void set_mode(uint8_t *mode, uint8_t new_mode) {
+  if (*mode == NOT_SET) {
+    *mode = new_mode;
+  } else {
+    cerr << "WARNING: Mode set more than once. Only first value will be "
+            "used: "
+         << mode_to_text(*mode) << endl;
+  }
+}
