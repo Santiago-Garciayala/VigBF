@@ -92,7 +92,7 @@ bool Attacker::result_found(std::pair<std::string, std::string> in) {
  *NOTE: the string thats passed to this function should only contain
  *alphabetic characters, and they should all be either uppercase or lowercase,
  *never a mix of both. A quick way to achieve this is by plugging the text into
- *a Vigenere object and using its getTextOnlyAlpha() method.
+ *a Vigenere object and using its get_processed_text() method.
  */
 double Attacker::fitness(const std::string &text) {
   double result = 0;
@@ -244,7 +244,7 @@ Attacker::brute_force_single_thread(Vigenere &v, int period, uint16_t limit) {
   while (!found) {
     key = get_key_from_num(key_num);
     cout << key << std::endl;
-    fitns = Attacker::fitness(v.decodeNoAlpha(key));
+    fitns = Attacker::fitness(v.decode_processed(key));
     cout << "fitness: " << fitns << std::endl;
     if (fitns > FITNESS_THRESHOLD) {
       found = true;
@@ -286,12 +286,12 @@ std::pair<std::string, std::string> Attacker::dictionary_attack(Vigenere &v) {
   }
 
   for (auto key : dict_words) {
-    fitns = Attacker::fitness(v.decodeNoAlpha(key));
+    fitns = Attacker::fitness(v.decode_processed(key));
     /*
     cout << key << std::endl;
     cout << "fitness: " << fitns << std::endl;
     if (key == "aani") {
-      cout << v.decodeNoAlpha(key) << std::endl;
+      cout << v.decode_processed(key) << std::endl;
     }
     */
     if (fitns > FITNESS_THRESHOLD) {
@@ -306,7 +306,7 @@ std::pair<std::string, std::string> Attacker::dictionary_attack(Vigenere &v) {
 
 std::pair<std::string, std::string>
 Attacker::crib_attack(Vigenere &v, const std::string &crib) {
-  const std::string &text = v.getTextOnlyAlpha_ref();
+  const std::string &text = v.get_processed_text_ref();
   std::pair<std::string, std::string> solution;
   std::string chunk;
   std::string decrypted_chunk;
@@ -339,7 +339,7 @@ Attacker::crib_attack(Vigenere &v, const std::string &crib) {
   chunk = text.substr(chunk_choice, chunk_choice + crib.length());
   decrypted_chunk = Vigenere::staticDecode(chunk, crib);
 
-  decrypted_txt = v.decodeNoAlpha(decrypted_chunk);
+  decrypted_txt = v.decode_processed(decrypted_chunk);
   fitns = Attacker::fitness(decrypted_txt);
 
   // cout << "fitness: " << fitns << std::endl;
@@ -357,7 +357,7 @@ std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
                                                                  int period) {
   std::pair<std::string, std::string> solution = NOT_FOUND;
   const std::string &alphabet =
-      isupper(v.getTextOnlyAlpha()[0]) ? ALPHABET_U : ALPHABET_L;
+      isupper(v.get_processed_text()[0]) ? ALPHABET_U : ALPHABET_L;
   std::string key;
   std::string new_key;
   std::string attempt;
@@ -365,7 +365,7 @@ std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
   double fitns = FITNESS_UNFIT;
 
   key.resize(period, alphabet[0]);
-  attempt.reserve(v.getTextOnlyAlpha().length());
+  attempt.reserve(v.get_processed_text().length());
 
   while (fitns < FITNESS_THRESHOLD) {
     new_key = key;
@@ -375,7 +375,7 @@ std::pair<std::string, std::string> Attacker::variational_attack(Vigenere &v,
       ++attempt_no;
 
       new_key[x] = alphabet[i];
-      attempt = v.decodeNoAlpha(new_key);
+      attempt = v.decode_processed(new_key);
       double new_fit = Attacker::fitness(attempt);
       // std::cout << new_fit << " : " << new_key << std::endl;
       //
@@ -422,7 +422,7 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
   std::vector<double> monofrequencies = {};
   std::vector<std::string> slices(period, "");
   std::string key;
-  const std::string &text = v.getTextOnlyAlpha_ref();
+  const std::string &text = v.get_processed_text_ref();
   const std::string &alphabet = isupper(text[0]) ? ALPHABET_U : ALPHABET_L;
   frequencies.reserve(period);
 
@@ -516,7 +516,7 @@ Attacker::perform_attacks(string input, queue<int> attack_queue, uint8_t period,
       break;
     case VARIATIONAL_ATTACK:
       if (period == 0) {
-        period = get_period_kasiski(v.getTextOnlyAlpha());
+        period = get_period_kasiski(v.get_processed_text());
       }
       res = a.variational_attack(v, period);
 
@@ -524,7 +524,7 @@ Attacker::perform_attacks(string input, queue<int> attack_queue, uint8_t period,
 
     case STATS_ATTACK:
       if (period == 0) {
-        period = get_period_kasiski(v.getTextOnlyAlpha());
+        period = get_period_kasiski(v.get_processed_text());
       }
       res = a.stats_attack(v, period);
 

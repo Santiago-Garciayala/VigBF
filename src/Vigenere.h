@@ -14,12 +14,17 @@ class Vigenere {
 
 private:
   string text;
-  string text_only_alpha;
+  string processed_text;
   unordered_map<int, char> non_alpha_removed;
   vector<int> non_alpha_removed_keys;
+  vector<int> upper_letters;
 
   void removeNonAlpha();
-  string addNonAlpha(string in);
+  string addNonAlpha(string &in);
+  void check_uppers();
+  string add_uppers(string &in);
+  void process_in();
+  string process_out(string &in);
 
 public:
   Vigenere(string text);
@@ -27,14 +32,14 @@ public:
   static string staticEncode(string plaintext, string key);
   string decode(string key);
   string encode(string key);
-  string decodeNoAlpha(string key);
-  string encodeNoAlpha(string key);
-  string decodeRaw(string key);
-  string encodeRaw(string key);
+  string decode_processed(string key);
+  string encode_processed(string key);
+  string decode_raw(string key);
+  string encode_raw(string key);
   string getText();
   void setText(string text);
-  string getTextOnlyAlpha();
-  string &getTextOnlyAlpha_ref();
+  string get_processed_text();
+  string &get_processed_text_ref();
 };
 
 #endif

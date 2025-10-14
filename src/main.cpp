@@ -215,13 +215,13 @@ int main(int argc, char *argv[]) {
       Vigenere v(misc::stringToLower(tesxt));
       attacks::Attacker a;
       std::string key = "migogosz";
-      std::string encoded_text = v.encodeNoAlpha(key);
+      std::string encoded_text = v.encode_processed(key);
       // cout << "encoded text: " << encoded_text << std::endl;
       int period = a.get_period_kasiski(encoded_text);
       // period = 6;
       cout << "period: " << period << std::endl;
-      cout << "fitness: " << a.fitness(v.getTextOnlyAlpha()) << std::endl;
-      cout << "fitness of encoded: " << a.fitness(v.encodeNoAlpha(key))
+      cout << "fitness: " << a.fitness(v.get_processed_text()) << std::endl;
+      cout << "fitness of encoded: " << a.fitness(v.encode_processed(key))
            << std::endl;
 
       Vigenere v2(encoded_text);
