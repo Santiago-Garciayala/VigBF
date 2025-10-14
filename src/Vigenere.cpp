@@ -48,6 +48,10 @@ void Vigenere::check_uppers() {
 
 string Vigenere::add_uppers(string &in) {
   string out = in;
+
+  if (upper_letters.size() == 0)
+    return out;
+
   for (int i = 0, j = 0; i < out.length(); ++i) {
     if (i == upper_letters[j]) {
       out[i] = toupper(out[i]);

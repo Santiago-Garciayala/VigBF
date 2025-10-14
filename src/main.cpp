@@ -24,13 +24,14 @@ void unknown_key_handhold();
 string mode_to_text(uint8_t mode);
 void set_mode(uint8_t *mode, uint8_t new_mode);
 
-const char *SHORT_OPTS = "edi:f:k:o:m:p:r:c:C:t:ThHvs:";
+const char *SHORT_OPTS = "edi:f:k:K:o:m:p:r:c:C:t:ThHvs:";
 const struct option LONG_OPTS[] = {
     {"encode", no_argument, nullptr, 'e'},
     {"decode", no_argument, nullptr, 'd'},
     {"input", required_argument, nullptr, 'i'},
     {"file", required_argument, nullptr, 'f'},
     {"key", required_argument, nullptr, 'k'},
+    {"key-file", required_argument, nullptr, 'K'},
     {"output", required_argument, nullptr, 'o'},
     {"mode", required_argument, nullptr, 'm'},
     {"period", required_argument, nullptr, 'l'},
@@ -69,13 +70,40 @@ int main(int argc, char *argv[]) {
       set_mode(&mode, DECODE);
       break;
     case 'i':
+      if (text != "") {
+        cout << "WARNING: Input text already specified. Only the first "
+                "instance will be used."
+             << endl;
+        break;
+      }
       text = optarg;
       break;
     case 'f':
+      if (text != "") {
+        cout << "WARNING: Input text already specified. Only the first "
+                "instance will be used."
+             << endl;
+        break;
+      }
       text = misc::getTextFromFile(optarg);
       break;
     case 'k':
+      if (key != "") {
+        cout << "WARNING: Key already specified. Only the first "
+                "instance will be used."
+             << endl;
+        break;
+      }
       key = optarg;
+      break;
+    case 'K':
+      if (key != "") {
+        cout << "WARNING: Key already specified. Only the first "
+                "instance will be used."
+             << endl;
+        break;
+      }
+      key = misc::getTextFromFile(optarg);
       break;
     case 'm':
       uint8_t attack_num;
