@@ -535,25 +535,4 @@ Attacker::perform_attacks(string input, queue<int> attack_queue, uint8_t period,
   return res;
 }
 
-pair<string, string> Attacker::perform_attacks(vector<string> inputs,
-                                               queue<int> attack_queue,
-                                               uint8_t period,
-                                               pair<uint8_t, uint8_t> range,
-                                               std::string crib, bool all) {
-  if (inputs.size() == 1)
-    return perform_attacks(inputs[0], attack_queue, period, range, crib);
-
-  if (inputs.size() != attack_queue.size() && !all) {
-    cout << "WARNING: The number of inputs is not the same as the number of "
-            "attacks."
-         << endl;
-    cout << "There might be unused inputs or attacks. " << endl;
-    cout << "If you wish to have all these attacks performed on all the "
-            "inputs, use -a / --all"
-         << endl;
-  }
-
-  return NOT_FOUND;
-}
-
 } // namespace attacks

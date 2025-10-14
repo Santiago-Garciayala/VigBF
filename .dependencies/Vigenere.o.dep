@@ -1,1 +1,1 @@
-build/Vigenere.o: src/Vigenere.cpp
+build/Vigenere.o: src/Vigenere.cpp src/Vigenere.h

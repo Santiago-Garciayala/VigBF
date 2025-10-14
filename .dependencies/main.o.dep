@@ -1,1 +1,2 @@
-build/main.o: src/main.cpp src/./Vigenere.cpp
+build/main.o: src/main.cpp src/./Vigenere.h src/Attacker.h src/Vigenere.h \
+ src/misc.h

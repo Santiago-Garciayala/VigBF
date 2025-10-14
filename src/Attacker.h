@@ -26,7 +26,7 @@ const static double IOC_THRESHOLD = 1.6;
 const static double COSANGLE_GOOD = 0.8;
 const static std::pair<std::string, std::string> NOT_FOUND = {"", "NOT FOUND"};
 enum Attacks {
-  BF_ATTACK,
+  BF_ATTACK = 1,
   DICT_ATTACK,
   CRIB_ATTACK,
   VARIATIONAL_ATTACK,
@@ -65,10 +65,6 @@ public:
   static pair<string, string>
   perform_attacks(string input, queue<int> attack_queue, uint8_t period,
                   pair<uint8_t, uint8_t> range, std::string crib = "");
-  static pair<string, string>
-  perform_attacks(vector<string> inputs, queue<int> attack_queue,
-                  uint8_t period, pair<uint8_t, uint8_t> range,
-                  std::string crib = "", bool all = false);
 };
 } // namespace attacks
 

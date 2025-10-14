@@ -24,12 +24,13 @@ void unknown_key_handhold();
 string mode_to_text(uint8_t mode);
 void set_mode(uint8_t *mode, uint8_t new_mode);
 
-const char *SHORT_OPTS = "edi:f:o:m:p:r:c:C:t:ThHvs:a";
+const char *SHORT_OPTS = "edi:f:k:o:m:p:r:c:C:t:ThHvs:";
 const struct option LONG_OPTS[] = {
     {"encode", no_argument, nullptr, 'e'},
     {"decode", no_argument, nullptr, 'd'},
     {"input", required_argument, nullptr, 'i'},
     {"file", required_argument, nullptr, 'f'},
+    {"key", required_argument, nullptr, 'k'},
     {"output", required_argument, nullptr, 'o'},
     {"mode", required_argument, nullptr, 'm'},
     {"period", required_argument, nullptr, 'l'},
@@ -41,7 +42,6 @@ const struct option LONG_OPTS[] = {
     {"Handhold", no_argument, nullptr, 'H'},
     {"verbose", no_argument, nullptr, 'v'},
     {"serial", optional_argument, nullptr, 's'},
-    {"all", no_argument, nullptr, 'a'},
     {0, 0, 0, 0}};
 enum Modes { NOT_SET, ENCODE, DECODE, ATTACK };
 const size_t DEFAULT_THREADS = 1;
@@ -51,14 +51,14 @@ int main(int argc, char *argv[]) {
   uint8_t mode = NOT_SET;
   string out = "";
   string outfile = "";
-  vector<string> inputs;
+  string text = "";
+  string key = "";
   queue<int> attack_queue;
   uint8_t period = 0;
   pair<uint8_t, uint8_t> range = {0, 0};
   string crib = "";
   size_t threads = DEFAULT_THREADS;
   bool verbose = false;
-  bool all = false;
 
   while ((c = getopt_long(argc, argv, SHORT_OPTS, LONG_OPTS, nullptr)) != -1) {
     switch (c) {
@@ -69,10 +69,13 @@ int main(int argc, char *argv[]) {
       set_mode(&mode, DECODE);
       break;
     case 'i':
-      inputs.push_back(optarg);
+      text = optarg;
       break;
     case 'f':
-      inputs.push_back(misc::getTextFromFile(optarg));
+      text = misc::getTextFromFile(optarg);
+      break;
+    case 'k':
+      key = optarg;
       break;
     case 'm':
       uint8_t attack_num;
@@ -89,7 +92,7 @@ int main(int argc, char *argv[]) {
       }
       if (attack_num >= attacks::BF_ATTACK &&
           attack_num < attacks::ATTACKS_LAST) {
-        inputs.push_back(optarg);
+        attack_queue.push(attack_num);
       } else {
         cerr << "Invalid attacks number: " << optarg
              << ". Valid attack numbers: " << attacks::BF_ATTACK << "-"
@@ -257,7 +260,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (inputs.size() == 0) {
+  if (text == "") {
     cerr << "ERROR: No input provided. Use -i for direct input, -f for input "
             "from file or -h for help."
          << endl;
@@ -266,30 +269,26 @@ int main(int argc, char *argv[]) {
 
   // MODE HANDLING
   if (mode == ENCODE) {
-    if (inputs.size() != 2) {
-      cerr << "ERROR: Not enough inputs provided while in encode mode." << endl;
-      cerr << "Make sure you provide text and a key, in that order." << endl;
-      cerr << "To provide direct input use -i. To provide input from file use "
-              "-f. Use -h for help."
+    if (key == "") {
+      cerr << "ERROR: No key provided while in encode mode. To enter a key use "
+              "-k. Use -h for help."
            << endl;
       exit(EXIT_FAILURE);
     }
 
-    Vigenere v(inputs[0]);
-    out = v.encode(inputs[1]);
+    Vigenere v(text);
+    out = v.encode(key);
 
   } else if (mode == DECODE) {
-    if (inputs.size() != 2) {
-      cerr << "ERROR: Not enough inputs provided while in decode mode." << endl;
-      cerr << "Make sure you provide text and a key, in that order." << endl;
-      cerr << "To provide direct input use -i. To provide input from file use "
-              "-f. Use -h for help."
+    if (key == "") {
+      cerr << "ERROR: No key provided while in encode mode. To enter a key use "
+              "-k. Use -h for help."
            << endl;
       exit(EXIT_FAILURE);
     }
 
-    Vigenere v(inputs[0]);
-    out = v.decode(inputs[1]);
+    Vigenere v(text);
+    out = v.encode(key);
 
   } else if (mode == ATTACK) {
     // check that there are attacks to do
@@ -302,7 +301,7 @@ int main(int argc, char *argv[]) {
     // was provided
     vector<int> attacks_q_vec = misc::queue_to_vec(attack_queue);
     if (std::find(attacks_q_vec.begin(), attacks_q_vec.end(),
-                  attacks::CRIB_ATTACK) == attacks_q_vec.end()) {
+                  attacks::CRIB_ATTACK) != attacks_q_vec.end()) {
       if (crib == "") {
         cerr << "ERROR: No crib was provided when trying to use a crib attack."
              << endl;
@@ -313,8 +312,10 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    attacks::Attacker::perform_attacks(inputs, attack_queue, period, range,
-                                       crib, all);
+    auto result = attacks::Attacker::perform_attacks(text, attack_queue, period,
+                                                     range, crib);
+    key = result.first;
+    out = result.second;
 
   } else {
     cerr << "ERROR: No mode set. Use -h for help." << endl;
@@ -323,10 +324,16 @@ int main(int argc, char *argv[]) {
 
   // OUTPUT STAGE
   if (outfile == "") {
-    cout << out << "\n" << endl;
+    if (mode == ATTACK) {
+      cout << "KEY: " << key << endl;
+    }
+    cout << "RESULT:\n" << out << "\n" << endl;
   } else {
     misc::writeToFile(out, outfile);
     cout << "Wrote output to " << outfile << endl;
+    if (mode == ATTACK) {
+      cout << "KEY: " << key << endl;
+    }
   }
 
   return EXIT_SUCCESS;

@@ -1,0 +1,2 @@
+build/Attacker.o: src/Attacker.cpp src/Attacker.h src/Vigenere.h \
+ src/misc.h
