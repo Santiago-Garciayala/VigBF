@@ -37,8 +37,8 @@ SOURCE_DIR := src
 DEPS_DIR := .dependencies
 DOCS_DIR := docs
 RESOURCES_DIR := resources
-DATA_DIR := $(datadir)/$(PROJECT_NAME)
-INSTALL_DIR := $(DESTDIR)/usr/bin
+DATA_DIR := /usr/share/$(PROJECT_NAME)
+INSTALL_DIR := /usr/bin
 
 # Additional compiler/linker flags
 CFLAGS := -g# PRESET - SPECIFY YOUR C/C++ COMPILER FLAGS

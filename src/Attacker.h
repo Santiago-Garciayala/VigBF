@@ -13,9 +13,10 @@
 namespace attacks {
 const static std::string ALPHABET_U = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const static std::string ALPHABET_L = "abcdefghijklmnopqrstuvwxyz";
-const static std::string PROBABILITIES_FILE = "resources/probabilities.bin";
+const static std::string PROBABILITIES_FILE =
+    "/usr/share/vigbf/resources/probabilities.bin";
 const static std::string DICTIONARY_FILE =
-    "resources/dictionaries/dict_only_alpha";
+    "/usr/share/vigbf/resources/dictionaries/dict_only_alpha";
 const static size_t ALPHABET_LEN = 26;
 const static size_t PROBABILITIES_SIZE =
     ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN * ALPHABET_LEN;
