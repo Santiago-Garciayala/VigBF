@@ -1,7 +1,7 @@
 import os, re, struct
 
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-BOOKS_DIR = "../../resources/books"
+BOOKS_DIR = "/resources/books"
 books = os.listdir(BOOKS_DIR)
 tetrafrequencies = [0]*26*26*26*26
 probabilities = [0.0]*26*26*26*26
@@ -27,5 +27,5 @@ def write_probabilities_bin(filename):
             f.write(struct.pack('d', prob))
 
 get_probabilities()
-write_probabilities_bin("../../resources/probabilities.bin")
+write_probabilities_bin("/resources/probabilities.bin")
 

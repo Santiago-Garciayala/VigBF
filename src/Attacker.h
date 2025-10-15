@@ -22,6 +22,7 @@ const static size_t PROBABILITIES_SIZE =
 const static short FITNESS_UNFIT = -15;
 const static double FITNESS_THRESHOLD = -9.8;
 const static uint8_t MAX_PERIOD = 32;
+const static uint8_t DEFAULT_BF_LIMIT = 10;
 const static double IOC_THRESHOLD = 1.6;
 const static double COSANGLE_GOOD = 0.8;
 const static std::pair<std::string, std::string> NOT_FOUND = {"", "NOT FOUND"};
@@ -42,10 +43,10 @@ extern bool is_dict_loaded;
 
 class Attacker {
 private:
-  void load_probabilities();
-  void load_dict();
-  std::string get_key_from_num(int num, bool upper = false);
-  double cosangle(vector<double> x, vector<double> y);
+  static void load_probabilities();
+  static void load_dict();
+  static std::string get_key_from_num(int num, bool upper = false);
+  static double cosangle(vector<double> x, vector<double> y);
   static bool result_found(std::pair<std::string, std::string> in);
 
 public:
@@ -54,14 +55,16 @@ public:
   double static index_of_coincidence(const std::string &text);
   int static get_period(const std::string &text);
   int static get_period_kasiski(const std::string &text);
-  std::pair<std::string, std::string>
-  brute_force_single_thread(Vigenere &v, int period = 1, uint16_t limit = 8);
-  std::pair<std::string, std::string> dictionary_attack(Vigenere &v);
-  std::pair<std::string, std::string> crib_attack(Vigenere &v,
-                                                  const std::string &crib);
-  std::pair<std::string, std::string> variational_attack(Vigenere &v,
-                                                         int period);
-  std::pair<std::string, std::string> stats_attack(Vigenere &v, int period);
+  static std::pair<std::string, std::string>
+  brute_force_single_thread(Vigenere &v, int period = 1,
+                            uint16_t limit = DEFAULT_BF_LIMIT);
+  static std::pair<std::string, std::string> dictionary_attack(Vigenere &v);
+  static std::pair<std::string, std::string>
+  crib_attack(Vigenere &v, const std::string &crib);
+  static std::pair<std::string, std::string> variational_attack(Vigenere &v,
+                                                                int period);
+  static std::pair<std::string, std::string> stats_attack(Vigenere &v,
+                                                          int period);
   static pair<string, string>
   perform_attacks(string input, queue<int> attack_queue, uint8_t period,
                   pair<uint8_t, uint8_t> range, std::string crib = "");

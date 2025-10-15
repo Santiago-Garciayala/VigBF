@@ -24,7 +24,7 @@ void unknown_key_handhold();
 string mode_to_text(uint8_t mode);
 void set_mode(uint8_t *mode, uint8_t new_mode);
 
-const char *SHORT_OPTS = "edi:f:k:K:o:m:p:r:c:C:t:ThHvs:";
+const char *SHORT_OPTS = "edi:f:k:K:o:m:p:r:c:C:l:t:ThHvs:";
 const struct option LONG_OPTS[] = {
     {"encode", no_argument, nullptr, 'e'},
     {"decode", no_argument, nullptr, 'd'},
@@ -38,6 +38,7 @@ const struct option LONG_OPTS[] = {
     {"range", required_argument, nullptr, 'r'},
     {"crib", required_argument, nullptr, 'c'},
     {"crib-file", required_argument, nullptr, 'C'},
+    {"limit", required_argument, nullptr, 'l'},
     {"threads", required_argument, nullptr, 't'},
     {"help", optional_argument, nullptr, 'h'},
     {"Handhold", no_argument, nullptr, 'H'},
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]) {
   uint8_t period = 0;
   pair<uint8_t, uint8_t> range = {0, 0};
   string crib = "";
+  uint8_t bf_limit = 0;
   size_t threads = DEFAULT_THREADS;
   bool verbose = false;
 
@@ -104,6 +106,15 @@ int main(int argc, char *argv[]) {
         break;
       }
       key = misc::getTextFromFile(optarg);
+      break;
+    case 'o':
+      if (outfile != "") {
+        cout << "WARNING: Output file already specified. Only the first "
+                "instance will be used."
+             << endl;
+        break;
+      }
+      outfile = optarg;
       break;
     case 'm':
       uint8_t attack_num;
@@ -223,6 +234,30 @@ int main(int argc, char *argv[]) {
       crib = misc::getTextFromFile(optarg);
 
       break;
+    case 'l':
+      uint8_t lim;
+      try {
+        lim = stoi(optarg);
+      } catch (...) {
+        cerr << "Invalid input for brute force limit: " << optarg << endl;
+        break;
+      }
+
+      if (lim <= 0) {
+        cerr << "ERROR: Brute force limit cannot be less than or equal to 0. "
+             << lim << endl;
+        break;
+      }
+
+      if (bf_limit == 0) {
+        bf_limit = lim;
+      } else {
+        cout << "WARNING: More than one brute force period limit specified. "
+                "Only the first one ("
+             << bf_limit << ") will be used. " << endl;
+      }
+
+      break;
     case 't':
       size_t t;
       try {
@@ -316,7 +351,7 @@ int main(int argc, char *argv[]) {
     }
 
     Vigenere v(text);
-    out = v.encode(key);
+    out = v.decode(key);
 
   } else if (mode == ATTACK) {
     // check that there are attacks to do
@@ -352,10 +387,10 @@ int main(int argc, char *argv[]) {
 
   // OUTPUT STAGE
   if (outfile == "") {
+    cout << out << "\n" << endl;
     if (mode == ATTACK) {
       cout << "KEY: " << key << endl;
     }
-    cout << "RESULT:\n" << out << "\n" << endl;
   } else {
     misc::writeToFile(out, outfile);
     cout << "Wrote output to " << outfile << endl;

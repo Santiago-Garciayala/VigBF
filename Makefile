@@ -36,6 +36,9 @@ BUILD_DIR := build
 SOURCE_DIR := src
 DEPS_DIR := .dependencies
 DOCS_DIR := docs
+RESOURCES_DIR := resources
+DATA_DIR := $(datadir)/$(PROJECT_NAME)
+INSTALL_DIR := $(DESTDIR)/usr/bin
 
 # Additional compiler/linker flags
 CFLAGS := -g# PRESET - SPECIFY YOUR C/C++ COMPILER FLAGS
@@ -50,6 +53,7 @@ SHELL := sh
 MKDIR_COMMAND := mkdir -p
 RM_COMMAND := rm -r
 ECHO_COMMAND := echo
+COPY_COMMAND := cp 
 
 # Makefile meta configuration
 DIR_TARGET := dirs
@@ -58,11 +62,18 @@ LINK_TARGET := link
 RUN_TARGET := run
 DOCS_TARGET := doc
 CLEAN_TARGET := clean
+GEN_RES_TARGET := gen-res #generate resources
+INSTALL_TARGET := install
 HELP_TARGET := help
-ALL_TARGET := $(DIR_TARGET) $(COMPILE_TARGET) $(LINK_TARGET)
+ALL_TARGET := $(DIR_TARGET) $(COMPILE_TARGET) $(LINK_TARGET) $(GEN_RES_TARGET)
 
 # Additional help information
 USER_HELP := 
+
+# Python scripts to run during install
+PYTHON := python3
+PYTHON_SCRIPTS_DIR := $(SRC_DIR)/scripts
+PYTHON_EXT := py
 
 
 # END OF USER-DEFINED SECTION OF THE CODE
@@ -81,6 +92,7 @@ endif
 # These variables are needed for the compile and link PHONY targets - to know which implicit rules to call
 SOURCES := $(shell find $(SOURCE_DIR) -name *.$(SOURCE_EXT))
 OBJECTS := $(patsubst %.$(SOURCE_EXT),$(BUILD_DIR)/%.$(OBJECT_EXT),$(notdir $(SOURCES)))
+SCRIPTS := $(shell find $(SOURCE_DIR)/$(PYTHON_SCRIPTS_DIR) -name *.$(PYTHON_EXT))
 
 # Search path for the compilation pattern rule
 VPATH := $(shell find $(SOURCE_DIR) -type d)
@@ -151,6 +163,13 @@ ifneq ($(USER_HELP),)
 	@$(ECHO_COMMAND) ""
 endif
 	@$(ECHO_COMMAND) "Makefile preset created by Linux-Tech-Tips (Martin), more at https://github.com/Linux-Tech-Tips"
+
+$(GEN_RES_TARGET):
+	$(PYTHON) $(SCRIPTS)
+
+$(INSTALL_TARGET): all
+	$(COPY_COMMAND) $(OUTFILE) $(INSTALL_DIR)
+	$(COPY_COMMAND) -a $(RESOURCES_DIR) $(DATA_DIR)
 
 
 -include $(DEPS_DIR)/*.$(DEPENDENCY_EXT)

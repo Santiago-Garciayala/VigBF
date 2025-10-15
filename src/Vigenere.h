@@ -34,8 +34,6 @@ public:
   string encode(string key);
   string decode_processed(string key);
   string encode_processed(string key);
-  string decode_raw(string key);
-  string encode_raw(string key);
   string getText();
   void setText(string text);
   string get_processed_text();

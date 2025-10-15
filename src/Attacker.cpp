@@ -482,8 +482,10 @@ std::pair<std::string, std::string> Attacker::stats_attack(Vigenere &v,
   }
   std::cout << "done key loop" << std::endl;
 
-  solution.first = key;
-  solution.second = v.decode(key);
+  if (fitness(v.decode_processed(key)) > FITNESS_THRESHOLD) {
+    solution.first = key;
+    solution.second = v.decode(key);
+  }
 
   return solution;
 }
@@ -492,7 +494,7 @@ pair<string, string>
 Attacker::perform_attacks(string input, queue<int> attack_queue, uint8_t period,
                           pair<uint8_t, uint8_t> range, std::string crib) {
   Vigenere v(input);
-  attacks::Attacker a;
+  Attacker a;
   std::pair<std::string, std::string> res = NOT_FOUND;
 
   while (!attack_queue.empty() && !result_found(res)) {
@@ -502,23 +504,23 @@ Attacker::perform_attacks(string input, queue<int> attack_queue, uint8_t period,
     switch (attack) {
     case BF_ATTACK:
       if (period == 0) {
-        res = a.brute_force_single_thread(v);
+        res = Attacker::brute_force_single_thread(v);
       } else {
-        res = a.brute_force_single_thread(v, period);
+        res = Attacker::brute_force_single_thread(v, period);
       }
       break;
     case DICT_ATTACK:
-      res = a.dictionary_attack(v);
+      res = Attacker::dictionary_attack(v);
       break;
     case CRIB_ATTACK:
-      res = a.crib_attack(v, crib);
+      res = Attacker::crib_attack(v, crib);
 
       break;
     case VARIATIONAL_ATTACK:
       if (period == 0) {
         period = get_period_kasiski(v.get_processed_text());
       }
-      res = a.variational_attack(v, period);
+      res = Attacker::variational_attack(v, period);
 
       break;
 
@@ -526,7 +528,7 @@ Attacker::perform_attacks(string input, queue<int> attack_queue, uint8_t period,
       if (period == 0) {
         period = get_period_kasiski(v.get_processed_text());
       }
-      res = a.stats_attack(v, period);
+      res = Attacker::stats_attack(v, period);
 
       break;
     }

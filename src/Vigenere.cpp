@@ -135,20 +135,10 @@ string Vigenere::encode(string key) {
 }
 
 string Vigenere::decode_processed(string key) {
-  string decoded = staticDecode(this->processed_text, key);
-  return decoded;
-}
-
-string Vigenere::encode_processed(string key) {
-  string encoded = staticEncode(this->processed_text, key);
-  return encoded;
-}
-
-string Vigenere::decode_raw(string key) {
   return staticDecode(this->processed_text, key);
 }
 
-string Vigenere::encode_raw(string key) {
+string Vigenere::encode_processed(string key) {
   return staticEncode(this->processed_text, key);
 }
 
